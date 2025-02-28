@@ -1,0 +1,79 @@
+{
+  "common": {
+    "ok": "Oke",
+    "cancel": "Batal",
+    "save": "Simpan",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "add": "Tambah",
+    "close": "Tutup",
+    "confirm": "Konfirmasi",
+    "search": "Cari",
+    "loading": "Memuat...",
+    "error": "Kesalahan",
+    "success": "Berhasil",
+    "warning": "Peringatan",
+    "info": "Informasi"
+  },
+  "auth": {
+    "login": "Masuk",
+    "logout": "Keluar",
+    "register": "Daftar",
+    "forgotPassword": "Lupa kata sandi?",
+    "resetPassword": "Atur ulang kata sandi",
+    "email": "Email",
+    "password": "Kata sandi",
+    "username": "Nama pengguna",
+    "rememberMe": "Ingat saya",
+    "signInWith": "Masuk dengan",
+    "signUpWith": "Daftar dengan",
+    "accountNotVerified": "Akun belum diverifikasi.",
+    "verifyAccount": "Verifikasi akun",
+    "resendVerificationEmail": "Kirim ulang email verifikasi"
+  },
+  "dashboard": {
+    "welcome": "Selamat datang",
+    "overview": "Ringkasan",
+    "recentActivity": "Aktivitas terbaru",
+    "quickActions": "Tindakan cepat",
+    "settings": "Pengaturan",
+    "profile": "Profil",
+    "notifications": "Notifikasi",
+    "noNotifications": "Tidak ada notifikasi baru."
+  },
+  "errors": {
+    "invalidCredentials": "Kredensial tidak valid.",
+    "networkError": "Terjadi kesalahan jaringan.",
+    "notFound": "Halaman tidak ditemukan.",
+    "serverError": "Terjadi kesalahan server.",
+    "permissionDenied": "Anda tidak memiliki izin untuk mengakses halaman ini.",
+    "somethingWentWrong": "Ada yang salah. Silakan coba lagi nanti."
+  },
+  "forms": {
+    "requiredField": "Bidang ini wajib diisi.",
+    "invalidEmail": "Format email tidak valid.",
+    "passwordTooShort": "Kata sandi terlalu pendek.",
+    "passwordsDoNotMatch": "Kata sandi tidak cocok.",
+    "submit": "Kirim",
+    "reset": "Atur ulang"
+  },
+  "user": {
+    "name": "Nama",
+    "email": "Email",
+    "role": "Peran",
+    "status": "Status",
+    "active": "Aktif",
+    "inactive": "Tidak aktif",
+    "updateProfile": "Perbarui profil",
+    "changePassword": "Ubah kata sandi"
+  },
+  "navigation": {
+    "home": "Beranda",
+    "about": "Tentang",
+    "contact": "Kontak",
+    "blog": "Blog",
+    "docs": "Dokumentasi",
+    "help": "Bantuan",
+    "logout": "Keluar"
+  }
+  }
