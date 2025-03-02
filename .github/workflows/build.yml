@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies for client
+      run: |
+        cd apps/we-dev-client
+        pnpm install
+
+    - name: Install dependencies for server
+      run: |
+        cd apps/we-dev/we-dev-next
+        pnpm install
+
+    - name: Build client
+      run: |
+        cd apps/we-dev-client
+        pnpm run build
+
+    - name: Build server
+      run: |
+        cd apps/we-dev/we-dev-next
+        pnpm run build
+
+    # Optional: Add steps for testing
+    # - name: Run tests
+    #   run: pnpm test
+
+    # Optional: Add steps for deploying
+    # - name: Deploy
+    #   run: pnpm run deploy
