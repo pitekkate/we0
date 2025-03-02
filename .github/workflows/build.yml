@@ -27,19 +27,9 @@ jobs:
         cd apps/we-dev-client
         pnpm install
 
-    - name: Install dependencies for server
-      run: |
-        cd apps/we-dev/we-dev-next
-        pnpm install
-
     - name: Build client
       run: |
         cd apps/we-dev-client
-        pnpm run build
-
-    - name: Build server
-      run: |
-        cd apps/we-dev/we-dev-next
         pnpm run build
 
     # Optional: Add steps for testing
