@@ -4,11 +4,11 @@ import {
   DecorationSet,
   WidgetType,
 } from "@codemirror/view";
-import { StateEffect, StateField, Extension } from "@codemirror/state";
+import { StateEffect, StateField, Extension, Range } from "@codemirror/state";
 import { keymap } from "@codemirror/view";
-import { createDiffButtons } from "../components/DiffButtons";
+import { createDiffButtons } from "../../DiffButtons";
 
-// 类型定义
+
 interface DiffRange {
   from: number;
   to: number;
@@ -21,14 +21,14 @@ interface DiffBlock {
   replace: { start: number; end: number };
 }
 
-// 常量定义
+// Constants definition
 const DIFF_MARKERS = {
   SEARCH: "<<<<<<< SEARCH",
   SEPARATOR: "=======",
   REPLACE: ">>>>>>> REPLACE",
 } as const;
 
-// 装饰器定义
+// Decorator definitions
 const decorations = {
   add: {
     line: Decoration.line({ class: "diff-add" }),
@@ -47,11 +47,11 @@ const decorations = {
           return createDiffButtons(
             () => {
               console.log("Accept button clicked");
-              // TODO 这里添加接受更改的逻辑，原则上不能侵入到 diff 的逻辑中
+              // TODO: Add logic for accepting changes, should not interfere with diff logic
             },
             () => {
               console.log("Cancel button clicked");
-              // TODO 这里添加取消更改的逻辑
+              // TODO: Add logic for canceling changes
             }
           );
         }
@@ -88,7 +88,7 @@ export const diffHighlightPlugin = StateField.define({
   update(highlights, tr) {
     highlights = tr.docChanged ? highlights.map(tr.changes) : highlights;
 
-    const newDecorations: any[] = [];
+    const newDecorations: Range<Decoration>[] = [];
     for (const effect of tr.effects) {
       if (effect.is(addDiffHighlight)) {
         const { from, to, type, markerType } = effect.value;
@@ -114,7 +114,7 @@ export const diffHighlightPlugin = StateField.define({
   provide: (f) => EditorView.decorations.from(f),
 });
 
-// 判断是否是 diff 文本
+// Check if content contains diff markers
 export const hasDiffContent = (content: string) => {
   return (
     content.includes(DIFF_MARKERS.SEARCH) ||
@@ -150,7 +150,6 @@ const parseDiffBlocks = (doc: string): DiffBlock[] => {
       lastLineIndex = i;
       isInSearchBlock = false;
     } else if (isInSearchBlock && line.trim() === "") {
-      // 处理空白行
       if (currentBlock.search && currentBlock.search.end === -1) {
         currentBlock.search.end = i + 1;
       }
@@ -167,7 +166,7 @@ const createHighlightEffects = (view: EditorView) => {
   >[] = [];
 
   blocks.forEach((block) => {
-    // 标记特殊行
+    // Mark special lines
     const searchLine = view.state.doc.line(block.search.start);
     const separatorLine = view.state.doc.line(block.search.end);
     const replaceLine = view.state.doc.line(block.replace.end);
@@ -193,7 +192,7 @@ const createHighlightEffects = (view: EditorView) => {
       })
     );
 
-    // 处理删除块中的所有行
+    // Process all lines in delete block
     for (let i = block.search.start + 1; i < block.search.end; i++) {
       const line = view.state.doc.line(i);
       effects.push(
@@ -205,7 +204,7 @@ const createHighlightEffects = (view: EditorView) => {
       );
     }
 
-    // 处理添加块中的所有行
+    // Process all lines in add block
     for (let i = block.search.end + 1; i < block.replace.end; i++) {
       const line = view.state.doc.line(i);
       effects.push(
@@ -225,7 +224,7 @@ export const createDiffExtension = (): Extension => {
   return [
     diffHighlightPlugin,
     EditorView.updateListener.of((update) => {
-      // 初始化或内容变更时都检查并应用 diff
+      // Check and apply diff on initialization or content change
       if (update.docChanged || update.startState.doc.length === 0) {
         const content = update.state.doc.toString();
         if (hasDiffContent(content)) {
@@ -233,18 +232,18 @@ export const createDiffExtension = (): Extension => {
         }
       }
     }),
-    // 视图初始化的扩展
+    // View initialization extension
     EditorView.domEventHandlers({
-      // 使用 focusin 事件来确保编辑器已经完全初始化
+      // Use focusin event to ensure editor is fully initialized
       focusin: (event, view) => {
         const content = view.state.doc.toString();
         if (hasDiffContent(content)) {
-          console.log("focusin 时检测到 diff 内容");
+          console.log("Detected diff content on focusin");
           applyDiffHighlights(view);
         }
       },
     }),
-    // 添加自定义回车键处理
+    // Add custom Enter key handler
     keymap.of([
       {
         key: "Enter",
@@ -257,14 +256,14 @@ export const createDiffExtension = (): Extension => {
           }
           return false;
         },
-        // 提高优先级
+        // Increase priority
         preventDefault: true,
       },
     ]),
   ];
 };
 
-// 应用 diff 高亮
+// Apply diff highlights
 export const applyDiffHighlights = (view: EditorView) => {
   const effects = createHighlightEffects(view);
   if (effects.length > 0) {

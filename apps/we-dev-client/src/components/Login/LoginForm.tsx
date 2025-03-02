@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, Dispatch, SetStateAction } from "react"
+import { motion } from "framer-motion"
 import {
   FaWeixin,
   FaEnvelope,
@@ -7,69 +7,50 @@ import {
   FaGithub,
   FaCode,
   FaSpinner,
-} from "react-icons/fa6";
-import { authService } from "../../api/auth";
-import { toast } from "react-hot-toast";
-import useUserStore from "../../stores/userSlice";
-import { useTranslation } from "react-i18next";
+} from "react-icons/fa6"
+import { authService } from "../../api/auth"
+import { toast } from "react-hot-toast"
+import useUserStore from "../../stores/userSlice"
+import { useTranslation } from "react-i18next"
+import { TabType } from "."
 
-// 声明全局 electron
-declare global {
-  interface Window {
-    electron: {
-      ipcRenderer: {
-        on: (channel: string, func: (...args: any[]) => void) => void;
-        removeListener: (
-          channel: string,
-          func: (...args: any[]) => void
-        ) => void;
-        send: (channel: string, ...args: any[]) => void;
-      };
-    };
-  }
-}
 
 type LoginFormProps = {
-  onSuccess?: () => void;
-  onTabChange: (tab: any) => void;
-};
+  onSuccess?: () => void
+  onTabChange: Dispatch<SetStateAction<TabType>>
+}
 
 const LoginForm = ({ onSuccess, onTabChange }: LoginFormProps) => {
   const [loginMethod, setLoginMethod] = useState<"email" | "github" | "wechat">(
     "email"
-  );
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState(false);
-  const [error, setError] = useState("");
-  const { setUser, setToken, setRememberMe } = useUserStore();
-  const [rememberMe, setRememberMeState] = useState(true);
-  const { t } = useTranslation();
-  // 添加 IPC 监听器
+  )
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState(false)
+  const [error, setError] = useState("")
+  const { setUser, setToken, setRememberMe, fetchUser } = useUserStore()
+  const [rememberMe, setRememberMeState] = useState(true)
+  const { t } = useTranslation()
+
   useEffect(() => {
     const handleLoginCallback = async (data: { token: string | undefined }) => {
-      // 更灵活的数据处理
-      const token = typeof data === "object" ? data.token : data;
+      const token = typeof data === "object" ? data.token : data
 
       if (token) {
-        console.log("处理到的 token:", token);
-        setToken(token);
-        // 获取用户信息
-        const user = await authService.getUserInfo(token);
-        setUser(user);
-        toast.success("登录成功！");
-        onSuccess?.();
+        setToken(token)
+        const user = await authService.getUserInfo(token)
+        setUser(user)
+        toast.success("success login")
+        onSuccess?.()
       } else {
-        console.warn("未能获取到有效的 token", data);
       }
-    };
+    }
 
     if (window.electron?.ipcRenderer) {
-      console.log("正在设置 IPC 监听器"); // 添加设置监听器日志
-      window.electron.ipcRenderer.on("login:callback", handleLoginCallback);
+      window.electron.ipcRenderer.on("login:callback", handleLoginCallback)
     } else {
-      console.warn("electron.ipcRenderer 不可用");
+      console.warn("electron.ipcRenderer unavailable")
     }
 
     return () => {
@@ -77,16 +58,16 @@ const LoginForm = ({ onSuccess, onTabChange }: LoginFormProps) => {
         window.electron.ipcRenderer.removeListener(
           "login:callback",
           handleLoginCallback
-        );
+        )
       }
     };
   }, [setToken, onSuccess]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+    e.preventDefault()
+    setError("")
+    setLoading(true)
 
     try {
       const response = await fetch(
@@ -98,29 +79,38 @@ const LoginForm = ({ onSuccess, onTabChange }: LoginFormProps) => {
           },
           body: JSON.stringify({ email, password }),
         }
-      );
+      )
 
-      const data = await response.json();
+      const data = await response.json()
 
-      if (!response.ok) {
-        throw new Error(data.error || "登录失败");
+      if(data.status && data.status !== 200){
+        throw new Error(data.message || "Login failed")
       }
 
-      // 设置记住我状态
-      setRememberMe(rememberMe);
+      setToken(data.token)
 
-      // 登录成功，使用 login action 一次性设置用户信息和 token
-      setUser(data.user);
-      setToken(data.token);
+      // TODO 这里最好加一个loading
+      // 拿到了 token 之后，再去fetchUser
+      const user = await fetchUser()
 
-      toast.success("登录成功！");
-      onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || "登录失败");
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
+      }
+
+      // Set remember me state
+      setRememberMe(rememberMe)
+
+      // After successful login, use login action to set user info and token at once
+      setUser(user)
+
+      toast.success("Login successful!")
+      onSuccess?.()
+    } catch (err) {
+      setError(err.message || "Login failed")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -130,7 +120,7 @@ const LoginForm = ({ onSuccess, onTabChange }: LoginFormProps) => {
             <FaCode className="text-2xl text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-            WeDev
+          We0
           </h1>
         </div>
         <p className="text-[#666]">{t("login.AI_powered_development_platform")}</p>
@@ -143,28 +133,28 @@ const LoginForm = ({ onSuccess, onTabChange }: LoginFormProps) => {
             <div className="text-red-500 text-sm text-center">{error}</div>
           )}
           <div className="relative group">
-            <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-[#666] transition-colors group-focus-within:text-[#3B82F6]" />
+            <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#666] transition-colors group-focus-within:text-[#3B82F6]" />
             <input
               type="email"
               placeholder="Email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#222] border border-[#333] rounded-xl py-3.5 px-11 text-white placeholder:text-[#666]
-                focus:outline-none focus:border-[#3B82F6] focus:bg-[#1A1A1A] focus:ring-1 focus:ring-[#3B82F6]
+              className="w-full bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-xl py-3.5 px-11 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-[#666]
+                focus:outline-none focus:border-[#3B82F6] focus:bg-gray-50 dark:focus:bg-[#1A1A1A] focus:ring-1 focus:ring-[#3B82F6]
                 transition-all duration-300"
             />
           </div>
           <div className="relative group">
-            <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#666] transition-colors group-focus-within:text-[#3B82F6]" />
+            <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#666] transition-colors group-focus-within:text-[#3B82F6]" />
             <input
               type="password"
-              placeholder={t("login.password")}
+              placeholder="Password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#222] border border-[#333] rounded-xl py-3.5 px-11 text-white placeholder:text-[#666]
-                focus:outline-none focus:border-[#3B82F6] focus:bg-[#1A1A1A] focus:ring-1 focus:ring-[#3B82F6]
+              className="w-full bg-white dark:bg-[#222] border border-gray-200 dark:border-[#333] rounded-xl py-3.5 px-11 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-[#666]
+                focus:outline-none focus:border-[#3B82F6] focus:bg-gray-50 dark:focus:bg-[#1A1A1A] focus:ring-1 focus:ring-[#3B82F6]
                 transition-all duration-300"
             />
           </div>
@@ -217,7 +207,7 @@ const LoginForm = ({ onSuccess, onTabChange }: LoginFormProps) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginForm;
+export default LoginForm

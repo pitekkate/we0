@@ -1,13 +1,12 @@
 import PreviewIframe from "./PreviewIframe";
-import { Input, Tooltip } from "antd";
 import { useState } from "react";
 import { useFileStore } from "./WeIde/stores/fileStore";
-import { executeCommand } from "./WeIde/components/Terminal/utils/commands";
 import WeIde from "./WeIde";
-import { OpenDirectoryButton } from "./OpenDirectoryButton";
 import { useTranslation } from "react-i18next";
+import useTerminalStore from "@/stores/terminalSlice";
 
-const ipcRenderer = (window as any)?.electron?.ipcRenderer;
+const ipcRenderer = window?.electron?.ipcRenderer;
+
 
 // 查找微信开发者工具路径
 export async function findWeChatDevToolsPath() {
@@ -81,6 +80,9 @@ const EditorPreviewTabs: React.FC = () => {
   const [showIframe, setShowIframe] = useState<boolean>(false);
   const { t } = useTranslation();
 
+  const {getTerminal} = useTerminalStore();
+
+
   const isMinPrograme = getFiles().includes("app.json")
 
   const openWeChatEditor = async () => {
@@ -109,7 +111,8 @@ const EditorPreviewTabs: React.FC = () => {
 
   return (
     <div className="m-1.5 flex-1 relative flex flex-col">
-      <div className="flex h-10 gap-0.5 bg-[#f3f3f3] dark:bg-[#1a1a1a] pl-0 pt-1 rounded-t-lg justify-between border-b border-[#e4e4e4] dark:border-[#333]">
+        {/* <TeamExample ></TeamExample> */}
+      <div className="flex h-10 gap-0.5 bg-[#f6f6f6] dark:bg-[#1a1a1c] pl-0 pt-1 rounded-t-lg justify-between border-b border-[#e4e4e4] dark:border-[#333]">
         <div className="flex-1 flex">
           <TabButton
             active={!showIframe}
@@ -127,13 +130,11 @@ const EditorPreviewTabs: React.FC = () => {
             label={t("editor.preview")}
           />
         </div>
-
-        {/* <div className="flex items-center gap-2 mr-2">
-          {(window as any).electron && <OpenDirectoryButton />}
-        </div> */}
       </div>
 
+
       <div className="flex-1 relative overflow-hidden">
+  
         <div
           className={`
           absolute inset-0

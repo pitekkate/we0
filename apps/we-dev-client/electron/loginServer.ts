@@ -3,13 +3,13 @@ import path from "path";
 import fs from "fs";
 import { BrowserWindow } from "electron";
 
-// React组件的HTML模板
+// HTML template for React component
 const htmlTemplate = `
 <!DOCTYPE html>
 <html>
 <head></head>
     <meta charset="UTF-8">
-    <title>登录成功</title>
+    <title>Login Successful</title>
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
@@ -100,8 +100,8 @@ const htmlTemplate = `
                     <div className="success-icon-container">
                         <div className="success-icon">✓</div>
                     </div>
-                    <h1 className="success-message">登录成功</h1>
-                    <p className="success-description">请返回应用程序继续操作</p>
+                    <h1 className="success-message">Login Successful</h1>
+                    <p className="success-description">Please return to the application to continue</p>
                 </div>
             );
         }
@@ -118,14 +118,13 @@ export function startLoginServer(mainWindow: BrowserWindow) {
       const url = new URL(req.url, `http://127.0.0.1:12900`);
       const token = url.searchParams.get("token");
 
-
-      // 通过 IPC 发送 token 到渲染进程
+      // Send token to renderer process via IPC
       if (token && mainWindow) {
-        console.log("准备发送 token 到渲染进程:", token);
+        console.log("Preparing to send token to renderer process:", token);
         mainWindow.webContents.send("login:callback", token);
       }
 
-      // 返回React页面
+      // Return React page
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end(htmlTemplate);
     } else {
@@ -135,7 +134,7 @@ export function startLoginServer(mainWindow: BrowserWindow) {
   });
 
   server.listen(12900, () => {
-    console.log("登录服务器启动在端口 12900");
+    console.log("Login server started on port 12900");
   });
 
   return server;

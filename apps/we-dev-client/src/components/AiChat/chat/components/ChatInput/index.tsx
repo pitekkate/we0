@@ -11,23 +11,26 @@ import { UploadButtons } from "./UploadButtons";
 import { SendButton } from "./SendButton";
 import type { ChatInputProps as ChatInputPropsType } from "./types";
 import { useTranslation } from "react-i18next";
-import useChatModeStore from '../../../../../stores/chatModeSlice';
+import useChatModeStore from "../../../../../stores/chatModeSlice";
 import useChatStore from "@/stores/chatSlice";
 import useThemeStore from "@/stores/themeSlice";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
+import track from "@/utils/track";
+import OptimizedPromptWord from "./OptimizedPromptWord";
+import useUserStore from "@/stores/userSlice";
 // import type { ModelOption } from './UploadButtons';
 
-
 export enum ChatMode {
-  Chat = 'chat',
-  Builder = 'builder'
+  Chat = "chat",
+  Builder = "builder",
 }
 export const modePlaceholders = {
   [ChatMode.Chat]: "chat.modePlaceholders.chat",
   [ChatMode.Builder]: "chat.modePlaceholders.builder",
-}
+};
 export const ChatInput: React.FC<ChatInputPropsType> = ({
   input,
+  stopRuning,
   isLoading,
   isUploading,
   uploadedImages,
@@ -37,6 +40,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
   handleFileSelect,
   removeImage,
   addImages,
+  setInput,
   setIsUploading,
   handleSketchUpload,
   baseModal,
@@ -47,6 +51,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
   const sketchInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { t } = useTranslation();
+  const { user } = useUserStore();
   const [showMentionMenu, setShowMentionMenu] = useState(false);
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
@@ -77,7 +82,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
       e.preventDefault(); // 阻止默认行为
       return;
     }
-    
+
     if (e.key === "Backspace" || e.key === "Delete") {
       const cursorPosition = e.currentTarget.selectionStart;
       const mention = mentions.find((m) => m.end === cursorPosition);
@@ -127,7 +132,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
 
   const debounce = (fn: Function, delay: number) => {
     let timer: NodeJS.Timeout;
-    return (...args: any[]) => {
+    return (...args: unknown[]) => {
       clearTimeout(timer);
       timer = setTimeout(() => fn(...args), delay);
     };
@@ -292,7 +297,8 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
   };
 
   const handlePaste = async (e: ClipboardEvent) => {
-    if(!baseModal.useImage) return;
+    console.log(baseModal, "useImage");
+    if (!baseModal.useImage) return;
     if (isUploading) return;
 
     const items = e.clipboardData?.items;
@@ -347,7 +353,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
     return () => {
       textarea.removeEventListener("paste", handlePaste);
     };
-  }, [isUploading,baseModal?.label]);
+  }, [isUploading, baseModal?.label]);
 
   useEffect(() => {
     if (showMentionMenu) {
@@ -368,12 +374,12 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
 
   return (
     <div className="px-1 py-2 ">
-      <div className="max-w-[640px] w-full mx-auto bg-[rgba(243,243,243)] dark:bg-[rgba(30,30,30)]">
+      <div className="max-w-[640px] w-full mx-auto bg-[#fff] dark:bg-[#18181a]">
         <ErrorDisplay
           errors={errors}
           onAttemptFix={async (error, index) => {
             const errorText = `Please help me fix this error:\n${error.code}`;
-            await handleSubmitWithFiles(null, errorText);
+            handleSubmitWithFiles(null, errorText);
             removeError(index);
           }}
           onRemoveError={removeError}
@@ -384,7 +390,9 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
           onRemoveImage={removeImage}
         />
 
-        <div className="relative bg-transparent dark:bg-[rgba(40,40,40)] rounded-lg border border-gray-600/30">
+        <OptimizedPromptWord input={input} setInput={setInput}></OptimizedPromptWord>
+
+        <div className="relative bg-transparent dark:bg-[#1a1a1c] rounded-lg border border-gray-600/30">
           <div
             className={classNames(
               "relative",
@@ -392,8 +400,8 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
             )}
           >
             {isUploading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-400 border-t-transparent"></div>
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/20">
+                <div className="w-8 h-8 border-2 border-gray-400 rounded-full animate-spin border-t-transparent"></div>
               </div>
             )}
             <div className="relative ">
@@ -427,7 +435,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
 
               {highlightRange && (
                 <div
-                  className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none p-4 text-sm whitespace-pre-wrap break-words"
+                  className="absolute top-0 bottom-0 left-0 right-0 p-4 text-sm break-words whitespace-pre-wrap pointer-events-none"
                   style={{
                     fontFamily: "inherit",
                     lineHeight: "inherit",
@@ -437,7 +445,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                   <span className="invisible">
                     {input.substring(0, highlightRange.start)}
                   </span>
-                  <span className="bg-blue-500/20 text-transparent">
+                  <span className="text-transparent bg-blue-500/20">
                     {input.substring(highlightRange.start, highlightRange.end)}
                   </span>
                   <span className="invisible">
@@ -468,7 +476,9 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                             ? "bg-blue-500/20 text-blue-400"
                             : "text-gray-300 hover:bg-gray-700/30"
                         )}
-                        onClick={() => handleMentionSelect(option)}
+                        onClick={() => {
+                          handleMentionSelect(option);
+                        }}
                         ref={
                           index === selectedMentionIndex
                             ? (el) => {
@@ -489,7 +499,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
             )}
 
             <div className="flex items-center justify-between px-2 py-2 border-t border-gray-600/30">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center">
                 <UploadButtons
                   isLoading={isLoading}
                   isUploading={isUploading}
@@ -498,7 +508,7 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                   onImageClick={() => fileInputRef.current?.click()}
                   onSketchClick={() => sketchInputRef.current?.click()}
                 />
-                
+
                 <button
                   className={classNames(
                     "p-2 rounded-md transition-colors",
@@ -507,26 +517,20 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
                   )}
                   onClick={() => {
                     setMode(
-                      chatMode === ChatMode.Chat ? ChatMode.Builder : ChatMode.Chat
+                      chatMode === ChatMode.Chat
+                        ? ChatMode.Builder
+                        : ChatMode.Chat
                     );
                   }}
                 >
                   {chatMode === ChatMode.Chat ? (
-                    <MessageSquare 
-                      className={classNames(
-                        "w-4 h-4",
-                        "text-blue-400"
-                      )} 
+                    <MessageSquare
+                      className={classNames("w-4 h-4", "text-blue-400")}
                     />
                   ) : (
-                    <Code2 
-                      className={classNames(
-                        "w-4 h-4",
-                        "text-blue-400"
-                      )} 
-                    />
+                    <Code2 className={classNames("w-4 h-4", "text-blue-400")} />
                   )}
-                  <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-gray-800 text-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  <span className="absolute px-2 py-1 mb-2 text-xs text-gray-200 transition-opacity -translate-x-1/2 bg-gray-800 rounded opacity-0 bottom-full left-1/2 group-hover:opacity-100 whitespace-nowrap">
                     {chatMode}
                   </span>
                 </button>
@@ -534,8 +538,9 @@ export const ChatInput: React.FC<ChatInputPropsType> = ({
 
               <SendButton
                 isLoading={isLoading}
+                stop={stopRuning}
                 isUploading={isUploading}
-                hasInput={!!input.trim()}
+                hasInput={!!(input?.trim())}
                 hasUploadingImages={uploadedImages.some(
                   (img) => img.status === "uploading"
                 )}

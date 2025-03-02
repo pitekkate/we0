@@ -2,7 +2,7 @@ import { ITheme } from 'xterm';
 
 export function getTerminalTheme(): any {
   return {
-    background: '#1e1e1e',
+    background: '#18181a',
     foreground: '#d4d4d4',
     cursor: '#d4d4d4',
     selection: '#264f78',

@@ -1,32 +1,7 @@
+import { EventEmitter } from '@/components/AiChat/utils/EventEmitter';
 import { useFileStore } from '../../stores/fileStore';
 import type { NodeContainer } from './types';
 
-// 添加简单的 EventEmitter 实现
-class SimpleEventEmitter {
-  private events: { [key: string]: Function[] } = {};
-
-  on(event: string, listener: Function) {
-    if (!this.events[event]) {
-      this.events[event] = [];
-    }
-    this.events[event].push(listener);
-    return this;
-  }
-
-  emit(event: string, ...args: any[]) {
-    if (this.events[event]) {
-      this.events[event].forEach(listener => listener(...args));
-    }
-    return true;
-  }
-
-  removeListener(event: string, listener: Function) {
-    if (this.events[event]) {
-      this.events[event] = this.events[event].filter(l => l !== listener);
-    }
-    return this;
-  }
-}
 
 const ipcRenderer = window.electron?.ipcRenderer as any;
 
@@ -52,8 +27,8 @@ async function initNodeContainer(): Promise<NodeContainer> {
     // @ts-ignore
     await ipcRenderer.invoke('node-container:init');
     const projectRoot = await getProjectRoot();
-    
-    const instance = new SimpleEventEmitter() as any;
+
+    const instance = new EventEmitter() as any;
 
     instance.fs = {
       mkdir: async (path: string, options?: { recursive?: boolean }) => {
@@ -83,7 +58,7 @@ async function initNodeContainer(): Promise<NodeContainer> {
             console.log('Renderer Process: Setting up stream listeners');
             const outputListener = (sdata: any, data: string) => {
               console.log('Renderer Process: Received output:', sdata);
-            //   controller.enqueue(new TextEncoder().encode(data));
+              //   controller.enqueue(new TextEncoder().encode(data));
               controller.enqueue(new TextEncoder().encode(sdata));
             };
 
@@ -141,13 +116,13 @@ export async function getNodeContainerInstance(): Promise<NodeContainer | null> 
 
     bootPromise = initNodeContainer();
     nodeContainerInstance = await bootPromise;
-    
+
     if (nodeContainerInstance) {
       const projectRoot = nodeContainerInstance.projectRoot;
-      
+
       // 初始化项目根目录
       await nodeContainerInstance.fs.mkdir(projectRoot, { recursive: true });
-      
+
       // 挂载初始文件
       const { files } = useFileStore.getState();
       for (const [path, contents] of Object.entries(files)) {

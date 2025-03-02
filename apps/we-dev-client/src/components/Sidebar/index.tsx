@@ -1,141 +1,158 @@
-import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { Settings, SettingsTab, TAB_KEYS } from "../Settings";
-import { db } from "../../utils/indexDB";
-import { eventEmitter } from "../AiChat/utils/EventEmitter";
-import useUserStore from "../../stores/userSlice";
-import { getIsElectron } from "@/utils/electron";
-import { useTranslation } from "react-i18next";
+import React, { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
+import { Settings, SettingsTab, TAB_KEYS } from "../Settings"
+import { db } from "../../utils/indexDB"
+import { eventEmitter } from "../AiChat/utils/EventEmitter"
+import useUserStore from "../../stores/userSlice"
+import { useTranslation } from "react-i18next"
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  username: string;
-  plan?: string;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-  onChatSelect?: (uuid: string) => void;
+  isOpen: boolean
+  onClose: () => void
+  username: string
+  onMouseEnter: () => void
+  onMouseLeave: () => void
+  onChatSelect?: (uuid: string) => void
 }
 
 export function Sidebar({
   isOpen,
   onClose,
-  username,
-  plan = "Personal Plan",
   onMouseEnter,
   onMouseLeave,
   onChatSelect,
 }: SidebarProps) {
-  const { t } = useTranslation();
-  const { user, isAuthenticated, logout, openLoginModal } = useUserStore();
+  const { t } = useTranslation()
+  const { user, isAuthenticated, logout, openLoginModal } = useUserStore()
+
   const [settingsState, setSettingsState] = useState<{
-    isOpen: boolean;
-    tab: SettingsTab;
+    isOpen: boolean
+    tab: SettingsTab
   }>({
     isOpen: false,
     tab: TAB_KEYS.GENERAL,
-  });
+  })
   const [chatHistory, setChatHistory] = useState<
     {
-      uuid: string;
-      title?: string;
-      lastMessage: string;
-      time: number;
+      uuid: string
+      title?: string
+      lastMessage: string
+      time: number
     }[]
-  >([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  >([])
+  const [searchTerm, setSearchTerm] = useState("")
 
-  // 加载聊天记录
+  // Load chat history
   const loadChatHistory = async () => {
     try {
-      const uuids = await db.getAllUuids();
+      const uuids = await db.getAllUuids()
       const historyPromises = uuids.map(async (uuid) => {
-        const records = await db.getByUuid(uuid);
-        const latestRecord = records[0]; // 已按时间排序，取最新
+        const records = await db.getByUuid(uuid)
+        const latestRecord = records[0] // Already sorted by time, get latest
 
-        // 添加安全检查
+        // Add safety check
         if (!latestRecord?.data?.messages?.length) {
           return {
             uuid,
             title: "New Chat",
             lastMessage: "",
             time: latestRecord?.time || Date.now(),
-          };
+          }
         }
 
         const lastMessage =
-          latestRecord.data.messages[latestRecord.data.messages.length - 1];
+          latestRecord.data.messages[latestRecord.data.messages.length - 1]
 
         return {
           uuid,
           title: latestRecord.data.title || "New Chat",
           lastMessage: lastMessage?.content || "",
           time: latestRecord.time,
-        };
-      });
+        }
+      })
 
-      const history = await Promise.all(historyPromises);
-      // 按时间排序
-      const sortedHistory = history.sort((a, b) => b.time - a.time);
-      setChatHistory(sortedHistory);
+      const history = await Promise.all(historyPromises)
+      // Sort by time
+      const sortedHistory = history.sort((a, b) => b.time - a.time)
+      setChatHistory(sortedHistory)
     } catch (error) {
-      console.error("Failed to load chat history:", error);
-      setChatHistory([]); // 出错时设置为空数组
+      console.error("Failed to load chat history:", error)
+      setChatHistory([]) // Set empty array when error occurs
     }
-  };
+  }
 
   useEffect(() => {
-    loadChatHistory();
+    loadChatHistory()
 
-    // 订阅数据库更新
+    // Subscribe to database updates
     db.subscribe(() => {
-      loadChatHistory();
-    });
+      loadChatHistory()
+    })
 
-    // 清理订阅
+    // Cleanup subscription
     // return () => unsubscribe();
-  }, []);
+  }, [])
 
-  // 过滤聊天记录
+  // Filter chat history
   const filteredHistory = chatHistory.filter(
     (chat) =>
       chat.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       chat.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  )
 
-  // 删除聊天记录
+  // Delete chat history
   const deleteChat = async (uuid: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    await db.deleteByUuid(uuid);
-    await loadChatHistory();
-  };
+    e.stopPropagation()
+    await db.deleteByUuid(uuid)
+    await loadChatHistory()
+  }
 
   const openSettings = (tab: SettingsTab) => {
     setSettingsState({
       isOpen: true,
       tab,
-    });
-  };
+    })
+  }
 
   const closeSettings = () => {
     setSettingsState((prev) => ({
       ...prev,
       isOpen: false,
-    }));
-  };
+    }))
+  }
+
+  const getInitials = (name: string) => {
+    return (
+      name
+        ?.split(" ")
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2) || "?"
+    )
+  }
 
   const handleLogout = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    logout();
-    onClose();
-  };
+    e.stopPropagation()
+    logout()
+    onClose()
+  }
+
+  const openUserCenter = () => {
+    const url = "https://we0.ai/user"
+    if (window.electron?.ipcRenderer) {
+      window.electron.ipcRenderer.send("open:external:url", url)
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer")
+    }
+  }
   const renderUserSection = () => {
     if (!isAuthenticated) {
       return (
         <div
           className="p-3 cursor-pointer hover:bg-white/5"
           onClick={() => {
-            openLoginModal();
+            openLoginModal()
           }}
         >
           <div className="flex items-center gap-2">
@@ -143,7 +160,7 @@ export function Sidebar({
               ?
             </div>
             <div className="flex-1">
-              <div className="text-white text-[14px] font-medium">
+              <div className="dark:text-white text-[14px] font-medium">
                 {t("login.title")}
               </div>
               <div className="text-[13px] text-gray-400 translate">
@@ -152,24 +169,39 @@ export function Sidebar({
             </div>
           </div>
         </div>
-      );
+      )
     }
 
     return (
       <div
         className="p-3 cursor-pointer hover:bg-white/5"
-        onClick={() => openSettings(TAB_KEYS.TOKENS)}
+        onClick={() => openSettings(TAB_KEYS.Quota)}
       >
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[14px] font-medium">
-            {user?.username?.slice(0, 2).toUpperCase()}
+          <div
+            className={`
+          w-9 h-9 rounded-full
+          flex items-center justify-center
+          text-white text-xs font-medium
+          ${user?.avatar ? "" : "bg-purple-500 dark:bg-purple-600"}
+        `}
+            style={
+              user?.avatar
+                ? {
+                    backgroundImage: `url(${user.avatar})`,
+                    backgroundSize: "cover",
+                  }
+                : undefined
+            }
+          >
+            {!user?.avatar && getInitials(user?.username || "?")}
           </div>
           <div className="flex-1">
-            <div className="text-white text-[14px] font-medium">
+            <div className="  dark:text-white text-[14px] font-medium">
               {user?.username}
             </div>
-            <div className="text-[13px] text-gray-400 translate">
-              {t("sidebar.personal_plan")}
+            <div className="text-[13px] text-gray-400 translate uppercase">
+              {`${user?.userQuota?.tierType} plan`}
             </div>
           </div>
           <button
@@ -192,15 +224,15 @@ export function Sidebar({
           </button>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   return createPortal(
     <>
       <div
         className={`
           fixed top-0 left-0 h-full w-[280px]
-          bg-white dark:bg-[#1E1E1E] z-50
+          bg-white dark:bg-[#18181a] z-50
           transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           flex flex-col text-[14px]
@@ -214,7 +246,7 @@ export function Sidebar({
         {/* Logo */}
         <div className="p-3">
           <h1 className="text-gray-900 dark:text-white text-[14px] font-medium">
-            WeDev
+            We0
           </h1>
         </div>
 
@@ -251,7 +283,7 @@ export function Sidebar({
         </div>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto px-2 mt-1">
+        <div className="flex-1 px-2 mt-1 overflow-y-auto">
           {filteredHistory.map((chat) => (
             <div
               key={chat.uuid}
@@ -263,10 +295,10 @@ export function Sidebar({
               </span>
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
-                  deleteChat(chat.uuid, e);
+                  e.stopPropagation()
+                  deleteChat(chat.uuid, e)
                 }}
-                className="hidden group-hover:block text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                className="hidden text-gray-500 group-hover:block dark:text-gray-400 hover:text-gray-700 dark:hover:text-white"
               >
                 <svg
                   className="w-4 h-4"
@@ -292,7 +324,7 @@ export function Sidebar({
           <div className="border-b border-gray-200 dark:border-[#333333]">
             <button
               onClick={() => openSettings("General")}
-              className="w-full text-left px-3 py-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-2"
+              className="flex items-center w-full gap-2 px-3 py-2 text-left text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5"
             >
               <svg
                 className="w-[16px] h-[16px]"
@@ -317,8 +349,10 @@ export function Sidebar({
             </button>
 
             <button
-              onClick={() => alert("请联系微信客服")}
-              className="w-full text-left px-3 py-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 flex items-center gap-2"
+              onClick={() => {
+                openUserCenter()
+              }}
+              className="flex items-center w-full gap-2 px-3 py-2 text-left text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-white/5"
             >
               <svg
                 className="w-[16px] h-[16px]"
@@ -351,5 +385,5 @@ export function Sidebar({
       />
     </>,
     document.body
-  );
+  )
 }

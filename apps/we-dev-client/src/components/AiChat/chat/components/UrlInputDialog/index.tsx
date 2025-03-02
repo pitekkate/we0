@@ -1,5 +1,6 @@
 import useChatModeStore from '@/stores/chatModeSlice';
 import useChatStore from '@/stores/chatSlice';
+import track from '@/utils/track';
 import React, { useState, KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -49,6 +50,7 @@ export const UrlInputDialog: React.FC<UrlInputDialogProps> = ({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      track.event('we0_upload_website',{})
       handleSubmit();
     } else if (e.key === 'Escape') {
       onClose();

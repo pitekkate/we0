@@ -28,14 +28,14 @@ export const MentionMenu: React.FC<MentionMenuProps> = ({
 
   return (
     <div
-      className="w-64 bg-[rgb(51,51,51)] rounded-lg shadow-lg border border-gray-700/50 overflow-hidden"
+      className="w-64 bg-[#1a1a1c] rounded-lg shadow-lg border border-gray-700/50 overflow-hidden"
     >
       <div className="py-1">
         {options.map((option, index) => (
           <button
             key={option.id}
-            className={`w-full px-3 py-2 flex items-center gap-3 text-left hover:bg-[rgba(60,60,60)] transition-colors ${
-              index === selectedIndex ? 'bg-[rgba(60,60,60)]' : ''
+            className={`w-full px-3 py-2 flex items-center gap-3 text-left hover:bg-[#28292b] transition-colors ${
+              index === selectedIndex ? 'bg-[#28292b]' : ''
             }`}
             onClick={() => onSelect(option)}
           >

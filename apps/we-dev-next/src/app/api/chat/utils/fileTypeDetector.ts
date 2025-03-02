@@ -1,7 +1,7 @@
 import { typeEnum } from "../prompt";
 
 export function determineFileType(filesPath: string[]): typeEnum {
-  if (filesPath.includes("app.json") || filesPath.includes("miniprogram/app.json") ) {
+  if (filesPath.includes("app.json")) {
     return typeEnum.MiniProgram;
   } 
   return typeEnum.Other;

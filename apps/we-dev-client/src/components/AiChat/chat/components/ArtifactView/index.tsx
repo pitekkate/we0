@@ -1,12 +1,20 @@
 import { openFile } from "../../../../WeIde/emit";
 import React, { useMemo, useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useFileStore } from "../../../../WeIde/stores/fileStore";
 import classNames from "classnames";
 
-import { executeCommand } from "@/components/WeIde/components/Terminal/utils/commands";
-import { CodeBlock, isThinkContent, processThinkContent } from "../MessageItem";
+import useTerminalStore from "@/stores/terminalSlice";
+
+import {
+  CodeBlock,
+  isThinkContent,
+  processStreamParts,
+  processThinkContent,
+} from "../MessageItem";
 import { parseFileFromContext } from "../../../utils/index";
+import { Message } from "ai";
 
 interface Task {
   status: "done" | "parsing";
@@ -20,18 +28,17 @@ type CommandStatus = "idle" | "running" | "completed";
 interface ArtifactViewProps {
   isUser: boolean;
   title: string;
-  content: string;
+  message: Message;
   isComplete?: boolean;
-  messages: Array<{ role: string; content: string }>;
 }
 
 export const ArtifactView: React.FC<ArtifactViewProps> = ({
   isUser,
   title,
-  content,
   isComplete,
-  messages,
+  message,
 }) => {
+  const content = message.content;
   const { setFiles, updateContent } = useFileStore();
   const [isExpanded, setIsExpanded] = useState(true);
   const [fileStates, setFileStates] = useState<
@@ -42,16 +49,15 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
     Record<string, CommandStatus>
   >({});
 
+  const {getTerminal} = useTerminalStore();
+
   // 处理 pre/post artifact 内容，应用 think 标签处理
   const preArtifactContent = useMemo(() => {
     const artifactIndex = content.indexOf("<boltArtifact");
     const preContent =
       artifactIndex > 0 ? content.substring(0, artifactIndex) : "";
-    return isThinkContent(preContent)
-      ? processThinkContent(preContent)
-      : preContent;
+    return message.reasoning ? processStreamParts(message.parts) : preContent;
   }, [content]);
-
   const postArtifactContent = useMemo(() => {
     const artifactEndIndex = content.lastIndexOf("</boltArtifact>");
     const postContent =
@@ -184,11 +190,12 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
       {/* 显示 boltArtifact 之前的文本内容 */}
       {preArtifactContent && (
         <div className="text-gray-900 dark:text-gray-100 leading-relaxed prose dark:prose-invert prose-sm max-w-none">
-  <ReactMarkdown
-                components={{
-                  code({ node, className, children, ...props }) {
-                    const match = /language-(\w+)(?::(.+))?/.exec(className || "");
-                    const isInline = !match;
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({ node, className, children, ...props }) {
+                const match = /language-(\w+)(?::(.+))?/.exec(className || "");
+                const isInline = !match;
 
                     if (isInline) {
                       return (
@@ -208,72 +215,156 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
                       ? children.join('') 
                       : String(children).replace(/\n$/, "");
 
-                    return (
-                      <CodeBlock language={language} filePath={filePath}>
-                        {content}
-                      </CodeBlock>
-                    );
-                  },
-                  pre({ children }) {
-                    // 直接返回子元素，不需要额外的包装
-                    return children;
-                  },
-                  p({ children }) {
-                    return <p className="mb-2 last:mb-0">{children}</p>;
-                  },
-                  ul({ children }) {
-                    return (
-                      <ul className="list-disc pl-4 mb-2 space-y-1">
-                        {children}
-                      </ul>
-                    );
-                  },
-                  ol({ children }) {
-                    return (
-                      <ol className="list-decimal pl-4 mb-2 space-y-1">
-                        {(children)}
-                      </ol>
-                    );
-                  },
-                  li({ children }) {
-                    return <li className="text-gray-700 dark:text-gray-300">{(children)}</li>;
-                  },
-                  a({ children, href }) {
-                    return (
-                      <a
-                        href={href}
-                        className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                return (
+                  <CodeBlock language={language} filePath={filePath}>
+                    {content}
+                  </CodeBlock>
+                );
+              },
+              pre({ children }) {
+                // 直接返回子元素，不需要额外的包装
+                return children;
+              },
+              p({ children }) {
+                return <p className="mb-2 last:mb-0">{children}</p>;
+              },
+              ul({ children }) {
+                return (
+                  <ul className="pl-4 mb-2 space-y-1 list-disc">{children}</ul>
+                );
+              },
+              ol({ children }) {
+                return (
+                  <ol className="pl-4 mb-2 space-y-1 list-decimal">
+                    {children}
+                  </ol>
+                );
+              },
+              li({ children }) {
+                return (
+                  <li className="text-gray-700 dark:text-gray-300">
+                    {children}
+                  </li>
+                );
+              },
+              a({ children, href }) {
+                return (
+                  <a
+                    href={href}
+                    className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {children}
+                  </a>
+                );
+              },
+              blockquote({ children }) {
+                const [isCollapsed, setIsCollapsed] = useState(false);
+                return (
+                  <blockquote className="relative py-2 pl-4 my-2 text-sm text-gray-600 border-l-4 border-purple-200 rounded dark:border-purple-800 dark:text-gray-400 bg-purple-50 dark:bg-purple-900/10 group">
+                    <div
+                      className={`overflow-hidden transition-all duration-200 ${
+                        isCollapsed ? "h-4" : "max-h-none"
+                      }`}
+                    >
+                      {children}
+                    </div>
+                    {/* 渐变遮罩 */}
+                    {isCollapsed && (
+                      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-purple-50 dark:from-[rgba(88,28,135,0.1)] to-transparent" />
+                    )}
+                    {/* 折叠/展开按钮 */}
+                    <button
+                      onClick={() => setIsCollapsed(!isCollapsed)}
+                      className="absolute p-1 text-purple-600 rounded-full bottom-1 right-2 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
                       >
-                        {(children)}
-                      </a>
-                    );
-                  },
-                  blockquote({ children }) {
-                    return (
-                      <blockquote className="border-l-4 border-gray-200 dark:border-gray-600 pl-4 my-2 text-sm text-gray-600 dark:text-gray-400">
-                        {(children)}
-                      </blockquote>
-                    );
-                  },
-                  strong({ children }) {
-                    return <strong>{(children)}</strong>;
-                  },
-                  em({ children }) {
-                    return <em>{(children)}</em>;
-                  },
-                }}
-              >
+                        {isCollapsed ? (
+                          <path
+                            d="M12 5v14M5 12h14"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        ) : (
+                          <path
+                            d="M5 12h14"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        )}
+                      </svg>
+                    </button>
+                  </blockquote>
+                );
+              },
+              strong({ children }) {
+                return <strong>{children}</strong>;
+              },
+              em({ children }) {
+                return <em>{children}</em>;
+              },
+              table({ children }) {
+                return (
+                  <div className="my-4 overflow-x-auto">
+                    <table className="min-w-full border-collapse border dark:border-gray-700">
+                      {children}
+                    </table>
+                  </div>
+                );
+              },
+              thead({ children }) {
+                return (
+                  <thead className="bg-purple-50 dark:bg-purple-900/20">
+                    {children}
+                  </thead>
+                );
+              },
+              tbody({ children }) {
+                return (
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {children}
+                  </tbody>
+                );
+              },
+              tr({ children }) {
+                return (
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    {children}
+                  </tr>
+                );
+              },
+              th({ children }) {
+                return (
+                  <th className="px-4 py-2 text-sm font-medium text-left text-purple-700 dark:text-purple-200 border dark:border-gray-700">
+                    {children}
+                  </th>
+                );
+              },
+              td({ children }) {
+                return (
+                  <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border dark:border-gray-700">
+                    {children}
+                  </td>
+                );
+              },
+            }}
+          >
             {preArtifactContent}
           </ReactMarkdown>
         </div>
       )}
 
       {/* 任务列表卡片 */}
-      <div className="bg-white dark:bg-[rgb(51,51,51)] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700/50">
+      <div className="bg-white dark:bg-[#1a1a1c] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700/50">
         <div
-          className="border-b border-gray-200 dark:border-gray-700/50 px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-[rgba(60,60,60)] transition-colors group"
+          className="border-b border-gray-200 dark:border-gray-700/50 px-3 py-2 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-[#28292b] transition-colors group"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-2">
@@ -313,7 +404,10 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
         >
           <div className="py-1 space-y-0.5">
             {tasks.map((task, i) => (
-              <div key={i} className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-[rgba(60,60,60)] group/item transition-colors">
+              <div
+                key={i}
+                className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-[#28292b] group/item transition-colors"
+              >
                 <div className="flex-shrink-0">
                   {task.status === "done" && (
                     <span className="text-green-500 dark:text-green-400 text-sm">
@@ -372,7 +466,7 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
               <div
                 key={cmd.type}
                 className={classNames(
-                  "bg-gray-50 dark:bg-[rgb(45,45,45)] px-3 py-2 font-mono text-sm flex items-center gap-1.5 justify-between group/npm",
+                  "bg-gray-50 dark:bg-[#232426] px-3 py-2 font-mono text-sm flex items-center gap-1.5 justify-between group/npm",
                   index !== npmCommands.length - 1 &&
                     "border-b border-gray-200 dark:border-gray-700/50"
                 )}
@@ -393,7 +487,7 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
                             ...prev,
                             [cmd.command]: "running",
                           }));
-                          await executeCommand("npm install");
+                          await getTerminal(0).executeCommand("npm install");
                           setCommandStatus((prev) => ({
                             ...prev,
                             [cmd.command]: "completed",
@@ -465,7 +559,7 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
                             ...prev,
                             [cmd.command]: "running",
                           }));
-                          await executeCommand("npm run dev");
+                          await getTerminal(0).executeCommand("npm run dev");
                           setCommandStatus((prev) => ({
                             ...prev,
                             [cmd.command]: "completed",
@@ -539,7 +633,7 @@ export const ArtifactView: React.FC<ArtifactViewProps> = ({
 
       {/* 显示 boltArtifact 结尾后的文本内容 */}
       {postArtifactContent && (
-        <div className="text-gray-900 dark:text-gray-100 leading-relaxed prose dark:prose-invert prose-sm max-w-none">
+        <div className="text-gray-900 dark:text-gray-100 leading-relaxed prose dark:prose-invert prose-sm max-w-none ">
           <ReactMarkdown
             components={{
               blockquote({ children }) {

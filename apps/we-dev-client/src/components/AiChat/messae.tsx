@@ -136,7 +136,6 @@ export class StreamingMessageParser {
               };
 
 
-
               // 根据 action 类型调用不同的回调
               if (state.currentAction.type === 'file') {
 

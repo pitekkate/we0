@@ -26,7 +26,6 @@ export const useTerminalState = create<TerminalState>((set, get) => ({
   }
 }));
 
-// 确保在导出前初始化
 useTerminalState.getState().initialize().catch(error => {
   console.error('Failed to initialize terminal state:', error);
 }); 

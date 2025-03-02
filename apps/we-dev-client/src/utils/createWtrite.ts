@@ -1,5 +1,6 @@
+import { createFileWithContent } from "@/components/WeIde/components/IDEContent/FileExplorer/utils/fileSystem"
 
-import { createFileWithContent } from "@/components/WeIde/features/file-explorer/utils/fileSystem";
+
 
 const needInFile = {
     'components/weicon/base64.js': `/* eslint-disable */

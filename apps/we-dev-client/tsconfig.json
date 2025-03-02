@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "noImplicitAny": false,
-    "module": "NodeNext",
+    "module": "ESNext",
     "strict": false,
     "jsx": "react-jsx",
     "esModuleInterop": true,
@@ -15,7 +15,7 @@
     "types": [
       "vite/client"
     ],
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Bundler",
     "outDir": "./dist",
     "baseUrl": ".",
     "paths": {

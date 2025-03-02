@@ -17,7 +17,7 @@
 }
 
 .terminal-container .xterm-viewport::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: #18181a;
 }
 
 .terminal-container .xterm-viewport::-webkit-scrollbar-thumb {

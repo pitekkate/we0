@@ -1,6 +1,9 @@
 import { FileAction, StreamingMessageParser } from "./messae";
-import { createFileWithContent } from "../WeIde/features/file-explorer/utils/fileSystem";
-import { executeCommand } from "../WeIde/components/Terminal/utils/commands";
+
+
+import { createFileWithContent } from "../WeIde/components/IDEContent/FileExplorer/utils/fileSystem";
+import useTerminalStore from "@/stores/terminalSlice";
+import { Message } from "ai/react";
 
 class List {
   private queue: string[] = [];
@@ -28,7 +31,8 @@ class List {
       while (this.queue.length > 0) {
         const command = this.getNext();
         if (command) {
-          await executeCommand(command);
+          console.log("执行命令", command);
+          await useTerminalStore.getState().getTerminal(0).executeCommand(command);
         }
       }
     } finally {
@@ -62,30 +66,18 @@ const messageParser = new StreamingMessageParser({
       }
     },
     onActionStream: async (data) => {
-      console.log("onActionStream", data.action)
        createFileWithContent((data.action as FileAction).filePath, data.action.content, true);
       //   workbenchStore.runAction(data, true);
     },
   },
 });
 
-interface ParserCallbacks {
-  onArtifactOpen?: (data: any) => void;
-  onArtifactClose?: (data: any) => void;
-  onActionOpen?: (data: any) => void;
-  onActionClose?: (data: any) => void;
-  onActionStream?: (data: any) => void;
-  onProgress?: (progress: number) => void;
-  onTaskComplete?: (filePath: string) => void;
-}
 
-export const parseMessages = async (messages: any) => {
-  for (const [index, message] of messages.entries()) {
+export const parseMessages = async (messages: Message[]) => {
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
     if (message.role === "assistant") {
-       messageParser.parse(
-        message.id,
-        message.content,
-      );
+      messageParser.parse(message.id, message.content);
     }
   }
 }

@@ -1,15 +1,7 @@
 const ipcRenderer = window.electron?.ipcRenderer;
 import { getNodeContainerInstance } from './instance';
 
-interface DevServer {
-  url: string;
-  process: {
-    output: ReadableStream;
-    exit: Promise<number>;
-  };
-}
-
-export async function startDevServer(): Promise<any> {
+export async function startDevServer(): Promise<{ output: ReadableStream<any>; exit: Promise<number>; }> {
   const nodeContainer = await getNodeContainerInstance();
   if (!nodeContainer) {
     throw new Error('NodeContainer not available');

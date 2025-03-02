@@ -1,13 +1,13 @@
-const ipcRenderer = (window as any)?.electron?.ipcRenderer;
+const ipcRenderer = window?.electron?.ipcRenderer;
 import { useFileStore } from '../../stores/fileStore';
 import { add, debounce } from 'lodash';
 
 import {isHiddenNodeModules} from "../../../../../config/electronOrSrcCommonConfig"
 
-// 存储文件的 MD5 值
-(window as any).fileHashMap = new Map<string, string>();
+// Store file hash values
+window.fileHashMap = new Map<string, string>();
 
-// 计算文件内容的 MD5
+// Calculate MD5 hash of file content
 async function calculateMD5(content: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(content);
@@ -16,8 +16,8 @@ async function calculateMD5(content: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-let frist = true;
-// 将递归函数移到外部
+let first = true;
+// Move recursive function outside
 async function readDirRecursive(
   dirPath: string,
   filesObj: Record<string, string>,
@@ -41,18 +41,17 @@ async function readDirRecursive(
         files.push(...subFiles);
       } else {
         const content = await ipcRenderer.invoke('node-container:readFile', fullPath, 'utf-8');
-        // 计算新的 MD5 并比较
+        // Calculate new MD5 and compare
         const newHash = await calculateMD5(content || '&empty');
-        const oldHash = (window as any).fileHashMap.get(fullPath);
+        const oldHash = window.fileHashMap.get(fullPath);
         const fileHash = await calculateMD5(filesObj[fullPath.replace((projectRoot.startsWith('/') ? projectRoot.substring(1) : projectRoot)  + '/', '').substring(1)] || '&empty');
 
-        console.log(oldHash, newHash, fileHash, '2123123')
         if ((oldHash !== newHash && fileHash !== newHash)) {
           files.push({
             path: fullPath.startsWith('/') ? fullPath.slice(1) : fullPath,
             content
           });
-          (window as any).fileHashMap.set(fullPath, newHash);
+          window.fileHashMap.set(fullPath, newHash);
         }
       }
     } catch (error) {
@@ -62,9 +61,9 @@ async function readDirRecursive(
   return files;
 }
 
-// 创建防抖版本的 updateFileSystemNow
+// Create debounced version of updateFileSystemNow
 const debouncedUpdateFileSystem = debounce(async () => {
-  if((window as any).isLoading) return;
+  if(window.isLoading) return;
   const { updateContent, addFile, files: filesObj } = useFileStore.getState();
 
   try {
@@ -73,33 +72,31 @@ const debouncedUpdateFileSystem = debounce(async () => {
     const files = await readDirRecursive(projectRoot, filesObj, projectRoot);
     console.log(files, projectRoot, 'systemfiles');
 
-    // 更新文件存储
+    // Update file storage
     if (files.length > 0) {
       for (const file of files) {
-        if (frist) {
+        if (first) {
           addFile(file.path.replace((projectRoot.startsWith('/') ? projectRoot.substring(1) : projectRoot) + '/', ''), file.content, true);
         } else {
           updateContent(file.path.replace((projectRoot.startsWith('/') ? projectRoot.substring(1) : projectRoot) + '/', ''), file.content, true);
         }
       }
-      frist = false;
-    } else {
-      // console.log('No files changed');
+      first = false;
     }
   } catch (error) {
     console.error('Failed to update files:', error);
   }
 }, 500);
 
-// 导出防抖版本
+// Export debounced version
 export const updateFileSystemNow = debouncedUpdateFileSystem;
 
-// 创建防抖版本的 syncFileSystem
+// Create debounced version of syncFileSystem
 const debouncedSyncFileSystem = debounce(async (close: boolean = false): Promise<boolean> => {
   try {
     const { files } = useFileStore.getState();
     await ipcRenderer.invoke('node-container:sync-filesystem', files);
-    if (!close && !(window as any).isLoading) {
+    if (!close && !window.isLoading) {
       updateFileSystemNow();
     }
     return true;
@@ -109,5 +106,5 @@ const debouncedSyncFileSystem = debounce(async (close: boolean = false): Promise
   }
 }, 500);
 
-// 导出防抖版本
+// Export debounced version
 export const syncFileSystem = debouncedSyncFileSystem;

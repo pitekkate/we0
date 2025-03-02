@@ -1,48 +1,22 @@
-import { Card, ConfigProvider, Divider, Flex, theme } from "antd";
-import { useEffect, useState } from "react";
+import { ConfigProvider, theme } from "antd";
 import { BaseChat } from "./chat";
 import { ChatMode } from "@/types/chat";
 import useChatModeStore from "@/stores/chatModeSlice";
-
-interface Code {
-  reactHtml: string;
-  vueHtml: string;
-  css: string;
-  html: string;
-  scss: string;
-}
-
-interface AiChatProps {
-  code: Code | null;
-}
-
-const Independent: React.FC<AiChatProps> = ({ code }) => {
+const Independent: React.FC = () => {
   const { mode, initOpen } = useChatModeStore();
 
   return (
     <ConfigProvider
       theme={{
-        algorithm: theme.darkAlgorithm, // 使用暗色算法
+        algorithm: theme.darkAlgorithm,
       }}
     >
       <div
-        className="bg-[rgba(255,255,255)] dark:bg-[rgba(30,30,30)]"
-        
+        className={`bg-[rgba(255,255,255)] dark:bg-[#18181a] min-w-[400px] rounded-lg p-4 ml-1.5 mt-1.5 mb-1.5 ${
+          initOpen ? 'flex items-center justify-center' : ''
+        }`}
         style={{
-          ...(initOpen
-            ? {
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }
-            : {}),
           width: `${mode === ChatMode.Builder && !initOpen ? "300px" : "100%"}`,
-          minWidth: "400px",
-          borderRadius: "8px",
-          padding: "16px",
-          marginLeft: "6px",
-          marginTop: "6px",
-          marginBottom: "6px",
         }}
       >
         <BaseChat />

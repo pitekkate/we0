@@ -1,17 +1,29 @@
 {
   "Welcome to React": "欢迎使用React",
   "chat": {
+    "urlInput": {
+      "title": "输入网站地址",
+      "placeholder": "请输入截图网站地址",
+      "button": "打开网站",
+      "errorInvalid": "请输入有效的URL"
+    },
+
     "tips": {
       "title": "欢迎使用we0",
       "description": "d2c sketch功能只有线上版可以用哟",
       "uploadSketch": "上传Sketch",
       "uploadImg": "上传图片",
+      "uploadWebsite": "上传网站",
       "game": "生成一个贪吃蛇小游戏",
       "hello": "生成一个好看的页面"
     },
     "errors": {
       "file_size_limit": "文件 {fileName} 超过5MB限制",
       "upload_failed": "上传失败",
+      "paste_failed": "粘贴图片失败",
+      "add_image_failed": "添加图片失败"
+    },
+    "success": {
       "images_uploaded": "图片上传成功",
       "images_uploaded_multiple": "{count}张图片上传成功",
       "image_pasted": "图片粘贴成功",
@@ -51,13 +63,22 @@
     "modePlaceholders": {
       "chat": "这是聊天模式。你可以直接与AI对话，并返回你想要的结果。",
       "builder": "这是构建模式，用于通过对话构建你的项目"
+    },
+    "optimizePrompt": {
+      "title": "优化提示词",
+      "placeholder": "在这里输入您的提示词，我们将帮助您优化...",
+      "processing": "处理中...",
+      "cancel": "取消",
+      "confirm": "确定",
+      "button": "优化提示词",
+      "error": "优化提示词失败:"
     }
   },
   "settings": {
     "title": "设置",
     "language": "语言",
     "general": "常规",
-    "tokens": "Tokens",
+    "Quota": "次数",
     "General": "常规",
     "Language": "语言",
     "keyPlaceholder": "请输入你的API Key",
@@ -88,8 +109,12 @@
     "explorer": "资源管理器"
   },
   "common": {
-      "cancel": "取消",
-      "confirm": "确认"
+    "cancel": "取消",
+    "confirm": "确认",
+    "open_directory_quota": "次数面板",
+    "login": "登录",
+    "close": "关闭",
+    "please_login": "请登录后查看您的使用次数"
   },
   "sidebar": {
     "start_new_chat": "开始新聊天",
@@ -102,14 +127,15 @@
   },
   "usage": {
     "usage": "使用情况",
-    "monthly_usage": "月使用",
-    "tokens_used": "使用的token",
+    "monthly_usage": "次月使用",
+    "quota_used": "使用的次数",
     "remaining": "剩余",
     "billing_cycle": "计费周期",
     "next_reset": "下次重置",
     "days": "天",
+    "type": "类型",
     "monthly_limit": "每月限额",
-    "buy_tokens": "购买更多token",
+    "buy_quote": "购买更多次数",
     "personal_plan": "个人面板"
   },
   "login": {
@@ -140,12 +166,26 @@
     "public_repositories": "公共仓库",
     "and_Gists": "和Gists",
     "continue_with_github": "使用GitHub登录",
-    "chat_limit_reached": "聊天次数已达到上限",
-    "chat_limit_reached_tips": "您已达到3次免费聊天的限制。请登录以继续使用聊天功能。",
-    "login": "登录",
-    "close": "关闭"
+    "chat_limit_reached": "聊天次数已达上限",
+    "chat_limit_reached_tips": "请登录后继续聊天",
+    "usage_limit_reached": "使用次数已达上限",
+    "usage_limit_reached_tips": "您的使用次数已达上限，请购买次数"
   },
+  "register": {
+    "register_success": "注册成功！",
+    "register_success_account": "我们已向您的邮箱发送了一封验证邮件，请及时完成验证。",
+    "process_login": "前往登录",
+    "create_account": "创建您的 We0 账户",
+    "creating_account": "正在创建账户...",
+    "create_account_button": "创建账户",
+    "already_account": "已经有账户了？"
+  },
+
   "sketch": {
     "title": "Sketch编辑器"
+  },
+  "update": {
+    "version_update": "版本更新",
+    "release_date": "发布日期"
   }
 }

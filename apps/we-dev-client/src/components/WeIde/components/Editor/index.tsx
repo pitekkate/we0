@@ -12,7 +12,7 @@ interface EditorProps {
 
 export const Editor = ({ fileName, initialLine }: EditorProps) => {
   const { getContent } = useFileStore();
-  const { setDirty, setCurrentFile, currentFile } = useEditorStore();
+  const { setDirty, setCurrentFile } = useEditorStore();
 
   const rawContent = getContent(fileName);
 
@@ -37,18 +37,18 @@ export const Editor = ({ fileName, initialLine }: EditorProps) => {
       ref={editorRef}
       className={`
         editor-container h-full w-full overflow-hidden
-        [&_.cm-editor]:!bg-[#ffffff] [&_.cm-editor]:dark:!bg-[#1e1e1e]
+        [&_.cm-editor]:!bg-[#ffffff] [&_.cm-editor]:dark:!bg-[#18181a]
         [&_.cm-scroller]:!font-mono
         
         /* 行号和边栏区域 */
-        [&_.cm-gutters]:!bg-[#f5f5f5] [&_.cm-gutters]:dark:!bg-[#1e1e1e]
+        [&_.cm-gutters]:!bg-[#f5f5f5] [&_.cm-gutters]:dark:!bg-[#18181a]
         [&_.cm-gutters]:border-r [&_.cm-gutters]:border-[#e5e5e5] [&_.cm-gutters]:dark:border-[#3c3c3c]
         [&_.cm-lineNumbers]:!text-[#237893] [&_.cm-lineNumbers]:dark:!text-[#c5c5c5]
         [&_.cm-gutterElement]:pl-[10px] [&_.cm-gutterElement]:min-w-[40px]
         
         /* 活动行高亮 */
-        [&_.cm-activeLine]:!bg-[#f3f3f3] [&_.cm-activeLine]:dark:!bg-[#2c2c2c]
-        [&_.cm-activeLineGutter]:!bg-[#f3f3f3] [&_.cm-activeLineGutter]:dark:!bg-[#2c2c2c]
+        [&_.cm-activeLine]:!bg-[#f6f6f6] [&_.cm-activeLine]:dark:!bg-[#2c2c2c]
+        [&_.cm-activeLineGutter]:!bg-[#f6f6f6] [&_.cm-activeLineGutter]:dark:!bg-[#2c2c2c]
         
         /* 选择和搜索 */
         [&_.cm-selectionBackground]:!bg-[#add6ff80] [&_.cm-selectionBackground]:dark:!bg-[#3a6da0]
@@ -64,7 +64,7 @@ export const Editor = ({ fileName, initialLine }: EditorProps) => {
         [&_.cm-matchingBracket]:!border-[#569cd6]
         [&_.cm-nonmatchingBracket]:!border-[#cd3131]
         [&_.cm-foldPlaceholder]:!bg-[#f5f5f5] [&_.cm-foldPlaceholder]:dark:!bg-[#2d2d2d]
-        [&_.cm-tooltip]:!bg-white [&_.cm-tooltip]:dark:!bg-[#252526]
+        [&_.cm-tooltip]:!bg-white [&_.cm-tooltip]:dark:!bg-[#1a1a1c]
         [&_.cm-tooltip]:border-[#e5e5e5] [&_.cm-tooltip]:dark:border-[#454545]
         
         /* 语法高亮基础样式 */

@@ -9,14 +9,13 @@ const MAX_RESPONSE_SEGMENTS = 2;
 export async function streamResponse(
   messages: Messages,
   model: string,
-  userId: string | null,
+  userId: string | null
 ): Promise<Response> {
   const stream = new SwitchableStream();
   const options: StreamingOptions = {
     toolChoice: "none",
     onFinish: async (response) => {
       const { text: content, finishReason } = response;
-      
       if (finishReason !== "length") {
         const tokens = estimateTokens(content);
         if (userId) {
@@ -43,4 +42,4 @@ export async function streamResponse(
   return result.toDataStreamResponse({
     sendReasoning: true,
   });
-} 
+}

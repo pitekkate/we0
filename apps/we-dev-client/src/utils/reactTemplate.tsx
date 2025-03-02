@@ -1,5 +1,5 @@
 import { uploadImage } from "@/api/chat";
-import { createFileWithContent } from "@/components/WeIde/features/file-explorer/utils/fileSystem";
+import { createFileWithContent } from "@/components/WeIde/components/IDEContent/FileExplorer/utils/fileSystem";
 
 type CodeType = "imgToCode" | "58ToCode";
 
@@ -114,11 +114,7 @@ const handleImgBase64Toloacl = async (code: string) => {
       const file = new File([imgBlob as BlobPart], "sketch-image.png", {
         type: "image/png",
       });
-      // const imgUrl = await uploadImage(file);
-      // 本地url
       const imgUrl = URL.createObjectURL(imgBlob as Blob);
-      console.log("imgUrl", imgUrl);
-      console.log("要替换什么", match);
       // 替换所有匹配的 base64 数据
       newCode = newCode.replace(match, imgUrl);
     }

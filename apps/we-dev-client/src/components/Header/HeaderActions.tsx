@@ -1,9 +1,8 @@
-import { ActionButton } from "./ActionButton";
+
 import { useFileStore } from "../WeIde/stores/fileStore";
 import JSZip from "jszip";
 import { OpenDirectoryButton } from "../OpenDirectoryButton";
 import { useTranslation } from "react-i18next";
-import useChatStore from "@/stores/chatSlice";
 import useChatModeStore from "@/stores/chatModeSlice";
 import { ChatMode } from "@/types/chat";
 
@@ -54,7 +53,7 @@ export function HeaderActions() {
             </svg>
             <span>{t("header.download")}</span>
           </button>
-          {(window as any).electron && <OpenDirectoryButton />}
+          {window.electron && <OpenDirectoryButton />}
         </div>
       )}
       {}

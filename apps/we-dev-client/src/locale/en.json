@@ -2,14 +2,25 @@
   "Welcome to React": "Welcome to React",
   "common": {
     "cancel": "Cancel",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "open_directory_quota": "quota panel",
+    "login": "Login",
+    "close": "Close",
+    "please_login": "Please sign in to view your quota"
   },
   "chat": {
+    "urlInput": {
+      "title": "Enter website address",
+      "placeholder": "Please enter the screenshot website address",
+      "button": "Open website",
+      "errorInvalid": "Please enter a valid URL"
+    },
     "tips": {
-      "title": "Welcome to we0",
+      "title": "build you want",
       "description": "d2c sketch feature is only available in the online version",
       "uploadSketch": "Upload Sketch",
       "uploadImg": "Upload Image",
+      "uploadWebsite": "Upload Website",
       "game": "Generate a snake game",
       "hello": "Generate a beautiful page"
     },
@@ -59,13 +70,22 @@
     "modePlaceholders": {
       "chat": "This is the chat mode. You can directly talk to the AI ​​and return the answer you want.",
       "builder": "This is builder mode, used to build your project through dialogue"
+    },
+    "optimizePrompt": {
+      "title": "Optimize Prompt",
+      "placeholder": "Enter your prompt here, we'll help you optimize it...",
+      "processing": "Processing...",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "button": "Optimize Prompt",
+      "error": "Failed to optimize prompt:"
     }
   },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "general": "General",
-    "tokens": "Tokens",
+    "Quota": "quota",
     "General": "General",
     "Language": "Language",
     "keyPlaceholder": "Please enter your API key",
@@ -106,14 +126,14 @@
   },
   "usage": {
     "usage": "Usage",
-    "monthly_usage": "Monthly Usage",
-    "tokens_used": "tokens used",
+    "monthly_usage": "quota Monthly Usage",
+    "quota_used": "quota used",
     "remaining": "remaining",
     "billing_cycle": "Billing Cycle",
     "next_reset": "Next Reset",
     "days": "days",
-    "monthly_limit": "Monthly Limit",
-    "buy_tokens": "Buy More Tokens",
+    "type": "type",
+    "buy_quote": "Buy More Quota",
     "personal_plan": "Personal Plan"
   },
   "login": {
@@ -144,12 +164,25 @@
     "public_repositories": "Public repositories",
     "and_Gists": "and Gists",
     "continue_with_github": "Continue with GitHub",
-    "chat_limit_reached": "Chat limit reached",
-    "chat_limit_reached_tips": "You have reached the limit of 3 free chats. Please login to continue using the chat feature.",
-    "login": "Login",
-    "close": "Close"
+    "chat_limit_reached": "Chat Limit Reached",
+    "chat_limit_reached_tips": "Please login to continue chatting",
+    "usage_limit_reached": "Usage Limit Reached",
+    "usage_limit_reached_tips": "You have reached the maximum usage limit. Please add quota to continue using."
+  },
+  "register": {
+    "register_success": "Registration Successful!",
+    "register_success_account": "We have sent a verification email to your mailbox, please verify it in time.",
+    "process_login": "Proceed to Login",
+    "create_account": "Create your We0 account",
+    "creating_account": "Creating Account...",
+    "create_account_button": "Create Account",
+    "already_account": "Already have an account?"
   },
   "sketch": {
     "title": "Sketch Editor"
+  },
+  "update": {
+    "version_update": "Version Update",
+    "release_date": "Release Date"
   }
 }

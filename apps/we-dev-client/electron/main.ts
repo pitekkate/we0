@@ -1,24 +1,13 @@
-import { app, BrowserWindow, ipcMain, Menu, nativeTheme } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, nativeTheme, IpcMainInvokeEvent } from "electron";
 import path from "path";
 import { spawn } from "child_process";
 import { initialize, enable } from "@electron/remote/main";
 import fs from "fs";
 import { startLoginServer } from "./loginServer";
-import {isHiddenNodeModules} from "../config/electronOrSrcCommonConfig"
+import { isHiddenNodeModules } from "../config/electronOrSrcCommonConfig"
 
-// 修改日志路径到 electron 目录
 
-console.log({
-  appPath: app.getAppPath(),
-  exe: app.getPath("exe"),
-  home: app.getPath("home"), // 用户主目录
-  appData: app.getPath("appData"), // 应用数据目录
-  userData: app.getPath("userData"), // 应用用户数据目录
-  temp: app.getPath("temp"), // 临时文件目录
-  downloads: app.getPath("downloads"), // 下载目录
-  desktop: app.getPath("desktop"), // 桌面目录
-  documents: app.getPath("documents"), // 文档目录
-});
+// Change log path to electron directory
 
 const logPath = path.join(app.getAppPath(), "../../logs");
 const logFile = path.join(
@@ -26,7 +15,7 @@ const logFile = path.join(
   `app-${new Date().toISOString().split("T")[0]}.log`
 );
 
-// 确保日志目录存在
+// Ensure log directory exists
 try {
   if (!fs.existsSync(logPath)) {
     fs.mkdirSync(logPath, { recursive: true });
@@ -35,20 +24,20 @@ try {
   console.error("Failed to create log directory:", error);
 }
 
-// 创建日志函数
+// Create log function
 function logToFile(message: string) {
   const timestamp = new Date().toISOString();
   const logMessage = `${timestamp} - ${message}\n`;
   try {
     fs.appendFileSync(logFile, logMessage);
-    console.log(logMessage); // 同时输出到控制台
+    console.log(logMessage); // Also output to console
   } catch (error) {
     console.error("Failed to write log:", error);
   }
 }
 
-// 记录启动信息
-logToFile("sadasd");
+// Record startup information
+
 logToFile(JSON.stringify(process.env, null, 2));
 logToFile("Application starting...");
 logToFile(`Log file location: ${logFile}`);
@@ -60,7 +49,7 @@ logToFile(app.getAppPath());
 logToFile(__dirname);
 logToFile(app.getPath("exe"));
 
-// 捕获未处理的异常
+// Catch unhandled exceptions
 process.on("uncaughtException", (error) => {
   logToFile(`Uncaught Exception: ${error.stack || error.message}`);
 });
@@ -69,12 +58,21 @@ process.on("unhandledRejection", (error) => {
   logToFile(`Unhandled Rejection: ${error}`);
 });
 
-// 在 app ready 之前添加日志
+// Add log before app ready
 app.on("will-finish-launching", () => {
   logToFile("App will finish launching");
 });
 
-let pty: any;
+let pty: {
+  spawn: (shell: string, args: string[], options: {
+    name: string;
+    cols: number;
+    rows: number;
+    cwd: string;
+    env: NodeJS.ProcessEnv;
+  }) => PtyProcess;
+};
+;
 try {
   const ptyNodePath = path.join(__dirname, "../../../node_modules/node-pty");
   pty = require(ptyNodePath);
@@ -121,13 +119,13 @@ try {
 }
 
 let nowPath = "";
-// 存储活跃的进程
+// Store active processes
 const activeProcesses = new Map();
 
-// 存储 pty 实例
-const ptyProcesses = new Map<string, any>();
+// Store pty instances
+const ptyProcesses = new Map<string, PtyProcess>();
 
-// 初始化 remote 模块
+// Initialize remote module
 initialize();
 
 let mainWindow: BrowserWindow | null = null;
@@ -143,21 +141,21 @@ function createWindow() {
         nodeIntegration: true,
         contextIsolation: true,
         preload: process.env.VITE_DEV_SERVER_URL
-          ? path.join(__dirname, "preload.js") // 开发环境
-          : path.join(app.getAppPath(), "dist-electron", "preload.js"), // 生产环境
+          ? path.join(__dirname, "preload.js") // Development environment
+          : path.join(app.getAppPath(), "dist-electron", "preload.js"), // Production environment
       },
     });
 
-    // 启动登录服务器并传入主窗口实例
+    // Start login server and pass main window instance
     const loginServer = startLoginServer(mainWindow);
 
-    // 添加处理外部URL打开的IPC监听器
+    // Add IPC listener for opening external URLs
     ipcMain.on("open:external:url", (_, url) => {
       const { shell } = require("electron");
       shell.openExternal(url);
     });
 
-    // 当窗口关闭时清理资源
+    // Clean up resources when window is closed
     mainWindow.on("closed", () => {
       mainWindow = null;
       if (loginServer) {
@@ -165,12 +163,12 @@ function createWindow() {
       }
     });
 
-    // 去掉菜单栏
+    // Remove menu bar
     // Menu.setApplicationMenu(null);
-    // 边框采用暗黑
+    // Use dark theme
     nativeTheme.themeSource = "dark";
 
-    // 监听窗口加载错误
+    // Listen for window load error
     mainWindow.webContents.on(
       "did-fail-load",
       (event, errorCode, errorDescription) => {
@@ -178,7 +176,7 @@ function createWindow() {
       }
     );
 
-    // 添加窗口错误监听
+    // Add window error listener
     mainWindow.on("unresponsive", () => {
       logToFile("Window became unresponsive");
     });
@@ -187,7 +185,36 @@ function createWindow() {
       logToFile("Window became responsive");
     });
 
-    // 开发环境下加载本地服务器
+    if(!process.env.VITE_DEV_SERVER_URL){
+      fetch(`${process.env.APP_BASE_URL}/wedev`, {
+        method: "GET"
+      }).then(async (res) => {
+        try {
+          // Get remote HTML content
+          const remoteHtml = await res.text();
+          
+          // Get local HTML content
+          const localHtmlPath = process.env.VITE_DEV_SERVER_URL 
+            ? path.join(__dirname, "../dist/index.html")
+            : path.join(app.getAppPath(), "dist/index.html");
+          const localHtml = fs.readFileSync(localHtmlPath, 'utf-8');
+  
+          // Compare HTML contents
+          if (remoteHtml !== localHtml) {
+            console.log('New version detected');
+            mainWindow.loadURL(`${process.env.APP_BASE_URL}/wedev`);
+          }
+        } catch (error) {
+          logToFile(`Version check error: ${error}`);
+        }
+      }).catch(error => {
+        console.log(error);
+      });
+    }
+    // Check for version updates
+
+
+    // Load local server in development environment
     if (process.env.VITE_DEV_SERVER_URL) {
       logToFile(`Loading dev server URL: ${process.env.VITE_DEV_SERVER_URL}`);
       mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
@@ -198,10 +225,10 @@ function createWindow() {
       mainWindow.loadFile(htmlPath);
     }
 
-    // 为这个窗口启用 remote 模块
+    // Enable remote module for this window
     enable(mainWindow.webContents);
 
-    // 检查文件是否存在
+    // Check if file exists
     ipcMain.handle(
       "node-container:check-file-exists",
       async (_event, path: string) => {
@@ -210,18 +237,18 @@ function createWindow() {
           await fs.access(path);
           return true;
         } catch {
-          throw new Error("文件不存在");
+          throw new Error("File does not exist");
         }
       }
     );
-    // 注册所需的 IPC 处理程序
+    // Register required IPC handlers
     ipcMain.handle("node-container:init", async () => {
-      // 初始化成功返回
+      // Return initialization success
       return true;
     });
 
     ipcMain.handle("node-container:mkdir", async (_, dirPath, options) => {
-      // 处理 mkdir 请求
+      // Handle mkdir request
       const fs = require("fs/promises");
       await fs.mkdir(dirPath, options);
       return true;
@@ -230,7 +257,7 @@ function createWindow() {
     ipcMain.handle(
       "node-container:writeFile",
       async (_, filePath, contents) => {
-        // 处理 writeFile 请求
+        // Handle writeFile request
         const fs = require("fs/promises");
         await fs.writeFile(filePath, contents);
         return true;
@@ -238,13 +265,13 @@ function createWindow() {
     );
 
     ipcMain.handle("node-container:readFile", async (_, filePath, encoding) => {
-      // 处理 readFile 请求
+      // Handle readFile request
       const fs = require("fs/promises");
       return await fs.readFile(filePath, { encoding });
     });
 
     ipcMain.handle("node-container:readdir", async (_, dirPath, options) => {
-      // 处理 readdir 请求
+      // Handle readdir request
       const fs = require("fs/promises");
       return await fs.readdir(dirPath, options);
     });
@@ -257,28 +284,28 @@ function createWindow() {
       nowPath = path;
     });
 
-    // 添加获取项目根目录的处理程序
+    // Add handler for getting project root directory
     ipcMain.handle("node-container:get-project-root", () => {
-      // 在开发环境中
+      // In development environment
       if (nowPath) {
         return nowPath;
       }
       if (process.env.VITE_DEV_SERVER_URL) {
         return path.join(process.cwd(), "workspace");
       }
-      // 在生产环境中
+      // In production environment
       return path.join(app.getAppPath(), "../../workspace");
     });
 
-    // 修改 spawn 命令处理程序
+    // Modify spawn command handler
     ipcMain.handle(
       "node-container:spawn",
       async (
-        event,
+        event: IpcMainInvokeEvent,
         command: string,
         args: string[],
-        options: { cwd?: string }
-      ) => {
+        options: SpawnOptions
+      ): Promise<ProcessResult> => {
         try {
           console.log(
             "Main Process: Spawning command:",
@@ -303,7 +330,7 @@ function createWindow() {
           console.log("Main Process: Process ID:", processId);
           activeProcesses.set(processId, proc);
 
-          // 使用 webContents 而不是 event.sender
+          // Use webContents instead of event.sender
           const webContents = event.sender;
 
           proc.stdout.on("data", (data) => {
@@ -339,7 +366,7 @@ function createWindow() {
       }
     );
 
-    // 添加获取进程退出码的处理程序
+    // Add handler for getting process exit code
     ipcMain.handle(
       "node-container:wait-exit",
       async (event, processId: string) => {
@@ -349,7 +376,7 @@ function createWindow() {
         }
 
         return new Promise((resolve) => {
-          proc.on("close", (code: any) => {
+          proc.on("close", (code: string) => {
             activeProcesses.delete(processId);
             resolve(code);
           });
@@ -357,7 +384,7 @@ function createWindow() {
       }
     );
 
-    // 添加终止进程的处理程序
+    // Add process termination handler
     ipcMain.handle(
       "node-container:kill-process",
       async (event, processId: string) => {
@@ -369,7 +396,7 @@ function createWindow() {
       }
     );
 
-    // 添加停止进程的处理程序
+    // Add process stop handler
     ipcMain.handle("node-container:stop-server", async (_, port: number) => {
       if (process.platform === "win32") {
         spawn("taskkill", ["/F", "/PID", port.toString()]);
@@ -378,16 +405,19 @@ function createWindow() {
       }
     });
 
-    ipcMain.handle("node-container:stat", async (_, filePath) => {
-      const fs = require("fs/promises");
-      const stats = await fs.stat(filePath);
-      return {
-        isDirectory: stats.isDirectory(),
-        isFile: stats.isFile(),
-        size: stats.size,
-        mtime: stats.mtime,
-      };
-    });
+    ipcMain.handle(
+      "node-container:stat",
+      async (_: IpcMainInvokeEvent, filePath: string): Promise<FileStats> => {
+        const fs = require("fs/promises");
+        const stats = await fs.stat(filePath);
+        return {
+          isDirectory: stats.isDirectory(),
+          isFile: stats.isFile(),
+          size: stats.size,
+          mtime: stats.mtime,
+        };
+      }
+    );
 
     ipcMain.handle("node-container:sync-filesystem", async (event, files) => {
       try {
@@ -399,10 +429,10 @@ function createWindow() {
 
         const fs = require("fs/promises");
 
-        // 确保目录存在
+        // Ensure directory exists
         await fs.mkdir(projectRoot, { recursive: true });
 
-        // 获取现有文件列表
+        // Get existing file list
         // @ts-ignore
         async function getAllFiles(dir: string): Promise<string[]> {
           const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -410,14 +440,7 @@ function createWindow() {
 
           for (const entry of entries) {
             const fullPath = path.join(dir, entry.name);
-            const isHiddenNodeModules = [
-              "node_modules",
-              "dist",
-              ".swc",
-              ".next",
-              ".yaml",
-            ];
-            if (isHiddenNodeModules.includes(entry.name)) {
+            if (isHiddenNodeModules.some(item => entry?.name?.indexOf(item) > -1)) {
               continue;
             }
 
@@ -431,10 +454,10 @@ function createWindow() {
           return files;
         }
 
-        // 获取所有现有文件
+        // Get all existing files
         const existingFiles = await getAllFiles(projectRoot);
 
-        // 同步所有文件
+        // Sync all files
         for (const [filePath, contents] of Object.entries(files)) {
           if (typeof contents !== "string") {
             console.log("Skipping non-string content:", filePath);
@@ -451,14 +474,14 @@ function createWindow() {
           await fs.mkdir(dirPath, { recursive: true });
           await fs.writeFile(fullPath, contents, "utf-8");
 
-          // 从现有文件列表中移除已处理的文件
+          // Remove processed files from existing file list
           const index = existingFiles.indexOf(fullPath);
           if (index > -1) {
             existingFiles.splice(index, 1);
           }
         }
 
-        // 删除不再需要的文件（排除 node_modules）
+        // Remove unnecessary files (excluding node_modules)
         for (const file of existingFiles) {
           if (!isHiddenNodeModules.some(item => file?.indexOf(item) > -1)) {
             await fs.unlink(file);
@@ -473,75 +496,78 @@ function createWindow() {
       }
     });
 
-    // 修改 terminal:create 处理程序
-    ipcMain.handle("terminal:create", (_, options) => {
-      console.log("terminal:create", options);
+    // Modify terminal:create handler
+    ipcMain.handle(
+      "terminal:create",
+      (event: IpcMainInvokeEvent, options: TerminalOptions): ProcessResult => {
+        console.log("terminal:create", options);
 
-      // 获取默认 shell
-      let shell = process.platform === "win32" ? "powershell.exe" : "bash";
+        // Get default shell
+        let shell = process.platform === "win32" ? "powershell.exe" : "bash";
 
-      // 在 macOS 上检查 zsh
-      if (process.platform === "darwin") {
-        try {
-          const userShell = process.env.SHELL;
-          if (userShell && userShell.includes("zsh")) {
-            shell = "zsh";
-          } else if (fs.existsSync("/bin/zsh")) {
-            shell = "zsh";
+        // Check zsh on macOS
+        if (process.platform === "darwin") {
+          try {
+            const userShell = process.env.SHELL;
+            if (userShell && userShell.includes("zsh")) {
+              shell = "zsh";
+            } else if (fs.existsSync("/bin/zsh")) {
+              shell = "zsh";
+            }
+          } catch (error) {
+            console.error("Error detecting shell:", error);
+            // If detection fails, use bash as a fallback option
           }
-        } catch (error) {
-          console.error("Error detecting shell:", error);
-          // 如果检测失败，保持使用 bash 作为后备选项
         }
+
+        const processId = options.processId || Math.random().toString(36).substr(2, 9);
+
+        // Add necessary environment variables
+        const env = {
+          ...process.env,
+          PATH: process.env.PATH || "",
+        };
+
+        // If macOS, add common npm paths
+        if (process.platform === "darwin") {
+          const additionalPaths = [
+            "/usr/local/bin", // Homebrew installed packages
+            "/opt/homebrew/bin", // Homebrew on Apple Silicon
+            "/usr/bin", // System binary files
+            "/bin", // Basic binary files
+            "/usr/sbin", // System management binary files
+            "/sbin", // Basic system management binary files
+            `${process.env.HOME}/.npm-global/bin`, // npm global installation path
+            `${process.env.HOME}/.nvm/versions/node/*/bin`, // nvm installed node paths
+          ];
+
+          env.PATH = `${additionalPaths.join(":")}:${env.PATH}`;
+        }
+
+        const ptyProcess = pty.spawn(shell, [], {
+          name: "xterm-color",
+          cols: options.cols || 80,
+          rows: options.rows || 24,
+          cwd: nowPath
+            ? nowPath
+            : process.env.VITE_DEV_SERVER_URL
+              ? path.join(process.cwd(), "workspace")
+              : path.join(app.getAppPath(), "../../workspace"),
+          env: env, // Use updated environment variables
+        });
+
+        ptyProcesses.set(processId, ptyProcess);
+
+        // Forward pty output to render process
+        ptyProcess.onData((data: string) => {
+          mainWindow.webContents.send(`terminal-output-${processId}`, data);
+        });
+
+        return { processId };
       }
+    );
 
-      const processId = Math.random().toString(36).substr(2, 9);
-
-      // 添加必要的环境变量
-      const env = {
-        ...process.env,
-        PATH: process.env.PATH || "",
-      };
-
-      // 如果是 macOS，添加常用的 npm 路径
-      if (process.platform === "darwin") {
-        const additionalPaths = [
-          "/usr/local/bin", // Homebrew 安装的包
-          "/opt/homebrew/bin", // Apple Silicon 上的 Homebrew
-          "/usr/bin", // 系统二进制文件
-          "/bin", // 基本二进制文件
-          "/usr/sbin", // 系统管理二进制文件
-          "/sbin", // 基本系统管理二进制文件
-          `${process.env.HOME}/.npm-global/bin`, // npm 全局安装路径
-          `${process.env.HOME}/.nvm/versions/node/*/bin`, // nvm 安装的 node 路径
-        ];
-
-        env.PATH = `${additionalPaths.join(":")}:${env.PATH}`;
-      }
-
-      const ptyProcess = pty.spawn(shell, [], {
-        name: "xterm-color",
-        cols: options.cols || 80,
-        rows: options.rows || 24,
-        cwd: nowPath
-          ? nowPath
-          : process.env.VITE_DEV_SERVER_URL
-            ? path.join(process.cwd(), "workspace")
-            : path.join(app.getAppPath(), "../../workspace"),
-        env: env, // 使用更新后的环境变量
-      });
-
-      ptyProcesses.set(processId, ptyProcess);
-
-      // 转发 pty 输出到渲染进程
-      ptyProcess.onData((data: any) => {
-        mainWindow.webContents.send(`terminal-output-${processId}`, data);
-      });
-
-      return { processId };
-    });
-
-    // 处理终端输入
+    // Handle terminal input
     ipcMain.handle("terminal:write", (_, processId, data) => {
       const ptyProcess = ptyProcesses.get(processId);
       if (ptyProcess) {
@@ -549,33 +575,33 @@ function createWindow() {
       }
     });
 
-    // 处理终端大小调整
+    // Handle terminal size adjustment
     ipcMain.handle("terminal:resize", (_, processId, cols, rows) => {
       const ptyProcess = ptyProcesses.get(processId);
       if (ptyProcess) {
         ptyProcess.resize(cols, rows);
       }
     });
-    // 获取当前目录的上级目录
+    // Get parent directory of current directory
     ipcMain.handle(
       "node-container:get-parent-paths",
-      async (_event, currentPath) => {
+      async (_: IpcMainInvokeEvent, currentPath: string): Promise<ParentPaths> => {
         try {
-          const parentPath = path.dirname(currentPath); // 上一级目录
-          const grandParentPath = path.dirname(parentPath); // 上上级目录
-          const lastGrandParentPath = path.dirname(grandParentPath); // 上上上级目录
+          const parentPath = path.dirname(currentPath); // Parent directory
+          const grandParentPath = path.dirname(parentPath); // Grand parent directory
+          const lastGrandParentPath = path.dirname(grandParentPath); // Great grand parent directory
           return {
             parentPath,
             grandParentPath,
             lastGrandParentPath,
           };
-        } catch (error: any) {
-          throw new Error(`获取上级目录失败: ${error.message}`);
+        } catch (error) {
+          throw new Error(`Failed to get parent directories: ${error.message}`);
         }
       }
     );
 
-    // 执行命令行命令
+    // Execute command line commands
     ipcMain.handle(
       "node-container:exec-command",
       async (_event, command: string) => {
@@ -597,21 +623,23 @@ function createWindow() {
               }
             );
           });
-        } catch (error: any) {
-          throw new Error(`命令执行失败: ${error.message}`);
+        } catch (error) {
+          throw new Error(`Command execution failed: ${error.message}`);
         }
       }
     );
-    // 处理终端销毁
+    // Handle terminal destruction
     ipcMain.handle("terminal:dispose", (_, processId) => {
+      console.log(2333)
       const ptyProcess = ptyProcesses.get(processId);
       if (ptyProcess) {
+        console.log(2555)
         ptyProcess.kill();
         ptyProcesses.delete(processId);
       }
     });
 
-    // 当窗口关闭时清理所有 pty 实例
+    // Clean up all pty instances when window is closed
     mainWindow.on("closed", () => {
       for (const ptyProcess of Array.from(ptyProcesses.values())) {
         ptyProcess.kill();
@@ -619,23 +647,24 @@ function createWindow() {
       ptyProcesses.clear();
     });
 
-    // 添加详细日志
+    // Add detailed log
     logToFile(`App path: ${app.getAppPath()}`);
     logToFile(`__dirname: ${__dirname}`);
     logToFile(
-      `Preload path: ${
-        process.env.VITE_DEV_SERVER_URL
-          ? path.join(__dirname, "preload.js")
-          : path.join(app.getAppPath(), "dist-electron", "preload.js")
+      `Preload path: ${process.env.VITE_DEV_SERVER_URL
+        ? path.join(__dirname, "preload.js")
+        : path.join(app.getAppPath(), "dist-electron", "preload.js")
       }`
     );
+
+
   } catch (error) {
     logToFile(`Error creating window: ${error}`);
     throw error;
   }
 }
 
-// 当 Electron 完成初始化时创建窗口
+// Create window when Electron finishes initialization
 app
   .whenReady()
   .then(() => {
@@ -650,7 +679,7 @@ app
     logToFile(`Failed to initialize app: ${error}`);
   });
 
-// 当所有窗口关闭时退出应用
+// Exit application when all windows are closed
 app.on("window-all-closed", () => {
   logToFile("All windows closed");
   if (process.platform !== "darwin") {

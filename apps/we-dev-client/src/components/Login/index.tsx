@@ -4,7 +4,7 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import useUserStore from "../../stores/userSlice";
 
-type TabType = "login" | "register";
+export type TabType = "login" | "register";
 type LoginProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -15,13 +15,13 @@ const Login = ({ isOpen, onClose }: LoginProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("login");
   const { closeLoginModal } = useUserStore();
 
-  // 统一处理关闭逻辑
+  // Handle unified close logic
   const handleClose = () => {
     onClose();
     closeLoginModal();
   };
 
-  // 处理登录成功
+  // Handle login success
   const handleSuccess = () => {
     handleClose();
   };
@@ -30,12 +30,11 @@ const Login = ({ isOpen, onClose }: LoginProps) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop - 点击遮罩关闭 */}
+          {/* Backdrop - click to close */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={handleClose}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           />
 
@@ -45,13 +44,21 @@ const Login = ({ isOpen, onClose }: LoginProps) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
+            onClick={() => {
+              handleClose();
+            }}
             className="fixed inset-0 grid place-items-center z-50"
           >
-            <div className="w-full max-w-md bg-[#1A1A1A] rounded-2xl p-8 shadow-2xl border border-[#333]">
-              {/* Close button - 点击关闭按钮关闭 */}
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="w-full max-w-md bg-white dark:bg-[#1A1A1A] rounded-2xl p-8 shadow-2xl border border-gray-200 dark:border-[#333]"
+            >
+              {/* Close button - click to close modal */}
               <button
                 onClick={handleClose}
-                className="absolute right-4 top-4 text-[#666] hover:text-[#888] transition-colors"
+                className="absolute right-4 top-4 text-gray-400 dark:text-[#666] hover:text-gray-600 dark:hover:text-[#888] transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

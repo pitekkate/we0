@@ -11,7 +11,7 @@ export const editorTheme = EditorView.theme({
     bottom: 0,
     fontSize: "14px",
     fontFamily: '"Fira Code", monospace',
-    backgroundColor: "#1e1e1e",
+    backgroundColor: "#18181a",
   },
   "&.cm-focused": {
     outline: "none !important",
@@ -28,7 +28,7 @@ export const editorTheme = EditorView.theme({
     caretColor: "#fff !important",
   },
   ".cm-gutters": {
-    backgroundColor: "#1e1e1e !important",
+    backgroundColor: "#18181a !important",
     border: "none !important",
     minWidth: "32px",
     position: "sticky",
@@ -63,7 +63,7 @@ export const editorTheme = EditorView.theme({
 
   // 代码提示弹窗容器
   ".cm-tooltip": {
-    backgroundColor: "#252526",
+    backgroundColor: "#1a1a1c",
     border: "1px solid #454545",
     borderRadius: "6px",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
@@ -74,7 +74,7 @@ export const editorTheme = EditorView.theme({
   // 自动完成提示框
   ".cm-tooltip.cm-tooltip-autocomplete": {
     "& > ul": {
-      backgroundColor: "#252526",
+      backgroundColor: "#1a1a1c",
       border: "none",
       fontSize: "14px",
       maxHeight: "300px",
@@ -186,7 +186,7 @@ export const editorTheme = EditorView.theme({
 
   // 参数提示框
   ".cm-tooltip.cm-tooltip-signature": {
-    backgroundColor: "#252526",
+    backgroundColor: "#1a1a1c",
     border: "1px solid #454545",
     color: "#d4d4d4",
     padding: "8px 12px",

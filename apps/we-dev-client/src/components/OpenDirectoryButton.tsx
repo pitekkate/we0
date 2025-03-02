@@ -1,13 +1,16 @@
 import React from "react";
 import { Tooltip, message } from "antd";
-import { newTerminal } from "./WeIde/components/Terminal/utils/commands";
+
 import { updateFileSystemNow } from "./WeIde/services";
 import { useFileStore } from "./WeIde/stores/fileStore";
 import { ActionButton } from "./Header/ActionButton";
 import { useTranslation } from "react-i18next";
+import useTerminalStore from "@/stores/terminalSlice";
 
 export const OpenDirectoryButton: React.FC = () => {
-  const { setEmptyFiles, setIsFirstSend, setIsUpdateSend, setProjectRoot } = useFileStore();
+  const { setEmptyFiles, setIsFirstSend, setIsUpdateSend, setProjectRoot } =
+    useFileStore();
+  const { resetTerminals } = useTerminalStore();
   const { t } = useTranslation();
   const handleOpenDirectory = async () => {
     try {
@@ -17,22 +20,22 @@ export const OpenDirectoryButton: React.FC = () => {
       if (!result.canceled && result.filePaths.length > 0) {
         setEmptyFiles();
         const selectedPath = result.filePaths[0];
-        await (window as any)?.electron?.ipcRenderer.invoke(
+        await window?.electron?.ipcRenderer.invoke(
           "node-container:set-now-path",
           selectedPath
         );
-        const projectRoot = await (window as any)?.electron?.ipcRenderer.invoke(
+        const projectRoot = await window?.electron?.ipcRenderer.invoke(
           "node-container:get-project-root"
         );
-
+        setProjectRoot(selectedPath);
         console.log("Selected directory:", selectedPath);
         console.log("Project root:", projectRoot);
-        setProjectRoot(selectedPath);
+
         setTimeout(() => {
           setIsFirstSend();
           setIsUpdateSend();
           setTimeout(() => {
-            newTerminal();
+            resetTerminals()
             updateFileSystemNow();
           }, 100);
         }, 100);
@@ -55,7 +58,7 @@ export const OpenDirectoryButton: React.FC = () => {
           </div>
         </div>
       }
-      overlayClassName="bg-white dark:bg-[#252526] border border-[#e5e5e5] dark:border-[#454545] shadow-lg"
+      overlayClassName="bg-white dark:bg-[#1a1a1c] border border-[#e5e5e5] dark:border-[#454545] shadow-lg"
       overlayInnerStyle={{
         padding: "8px 12px",
         borderRadius: "6px",

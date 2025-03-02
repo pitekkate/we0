@@ -1,36 +1,37 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { dialog } from "@electron/remote";
+import type { OpenDialogOptions } from 'electron';
+import type { IpcRendererEvent } from 'electron';
 
-// 创建一个事件映射来跟踪监听器
-const listeners = new Map<string, Function[]>();
+type ListenerFunction = (...args: unknown[]) => void;
+const listeners = new Map<string, ListenerFunction[]>();
 
 contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
-    invoke: (channel: string, ...args: any[]) => {
+    invoke: (channel: string, ...args: unknown[]) => {
       return ipcRenderer.invoke(channel, ...args);
     },
-    on: (channel: string, func: Function) => {
-      // 保存监听器引用
+    on: (channel: string, func: ListenerFunction) => {
       if (!listeners.has(channel)) {
         listeners.set(channel, []);
       }
-      const wrappedFunc = (_: any, ...args: any[]) => func(...args);
+      const wrappedFunc = (_: IpcRendererEvent, ...args: unknown[]) => func(...args);
       listeners.get(channel)?.push(wrappedFunc);
       ipcRenderer.on(channel, wrappedFunc);
     },
-    removeListener: (channel: string, func: Function) => {
+    removeListener: (channel: string, func: ListenerFunction) => {
       const wrappedFuncs = listeners.get(channel) || [];
-      const index = wrappedFuncs.indexOf(func as any);
+      const index = wrappedFuncs.indexOf(func);
       if (index > -1) {
         const wrappedFunc = wrappedFuncs[index];
-        ipcRenderer.removeListener(channel, wrappedFunc as any);
+        ipcRenderer.removeListener(channel, wrappedFunc);
         wrappedFuncs.splice(index, 1);
       }
     },
-    send: (channel: string, ...args: any[]) => {
+    send: (channel: string, ...args: unknown[]) => {
       ipcRenderer.send(channel, ...args);
     },
-    "terminal:create": (options: any) =>
+    "terminal:create": (options: TerminalOptions) =>
       ipcRenderer.invoke("terminal:create", options),
     "terminal:write": (processId: string, data: string) =>
       ipcRenderer.invoke("terminal:write", processId, data),
@@ -41,11 +42,11 @@ contextBridge.exposeInMainWorld("electron", {
   },
 });
 
-// 清理函数
+// Cleanup function
 window.addEventListener("unload", () => {
   listeners.forEach((funcs, channel) => {
     funcs.forEach(func => {
-      ipcRenderer.removeListener(channel, func as any);
+      ipcRenderer.removeListener(channel, func);
     });
   });
   listeners.clear();
@@ -62,9 +63,9 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// 安全地暴露 API 到渲染进程
+// Safely expose API to renderer process
 contextBridge.exposeInMainWorld("myAPI", {
   dialog: {
-    showOpenDialog: (options: any) => dialog.showOpenDialog(options),
+    showOpenDialog: (options: OpenDialogOptions) => dialog.showOpenDialog(options),
   },
 });

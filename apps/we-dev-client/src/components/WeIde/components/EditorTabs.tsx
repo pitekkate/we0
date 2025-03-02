@@ -1,10 +1,8 @@
 import { FileCode, FileText, X } from "lucide-react";
 import { useEditorStore } from "../stores/editorStore";
 import { useUnsavedChanges } from "../hooks/useUnsavedChanges";
-import { cn } from "../utils/cn";
-import FileIcon from "../features/file-explorer/components/fileIcon";
-
-// 动态导入 lucide-react 图标
+import { cn } from "@/utils/cn";
+import FileIcon from "./IDEContent/FileExplorer/components/fileIcon";
 
 interface EditorTabsProps {
   openTabs: string[];
@@ -42,7 +40,7 @@ export function EditorTabs({
     e.preventDefault();
     const menu = document.createElement("div");
     menu.className =
-      "absolute bg-white dark:bg-[#252526] border border-[#e5e5e5] dark:border-[#454545] rounded-lg shadow-lg py-1 z-50 transition-opacity duration-150";
+      "absolute bg-white dark:bg-[#1a1a1c] border border-[#e5e5e5] dark:border-[#454545] rounded-lg shadow-lg py-1 z-50 transition-opacity duration-150";
     menu.style.left = `${e.clientX}px`;
     menu.style.top = `${e.clientY}px`;
 
@@ -69,7 +67,7 @@ export function EditorTabs({
 
   return (
     <div
-      className="bg-[#f3f3f3] dark:bg-[#2d2d2d] flex items-center border-b border-[#e5e5e5] dark:border-[#252525] overflow-x-auto scrollbar-thin scrollbar-thumb-[#c8c8c8] dark:scrollbar-thumb-[#404040] scrollbar-track-transparent"
+      className="bg-[#f6f6f6] dark:bg-[#28292b] flex items-center border-[#e5e5e5] dark:border-[#252525] overflow-x-auto scrollbar-thin scrollbar-thumb-[#c8c8c8] dark:scrollbar-thumb-[#404040] scrollbar-track-transparent"
       onContextMenu={handleContextMenu}
       role="tablist"
       aria-label="Open editor tabs"
@@ -83,8 +81,8 @@ export function EditorTabs({
           className={cn(
             "group relative px-3 py-1.5 flex items-center space-x-2 cursor-pointer border-r border-[#e5e5e5] dark:border-[#252525] min-w-[120px] max-w-[200px] transition-all duration-200 ease-in-out",
             activeTab === tab
-              ? "bg-white dark:bg-[#1e1e1e] text-[#333] dark:text-white before:absolute before:bottom-0 before:left-0 before:w-full before:h-[2px] before:bg-[#007acc]"
-              : "hover:bg-[#f9f9f9] dark:hover:bg-[#2d2d2d] text-[#616161] dark:text-gray-400 hover:text-[#333] dark:hover:text-gray-200"
+              ? "bg-white dark:bg-[#18181a] text-[#333] dark:text-white before:absolute before:bottom-0 before:left-0 before:w-full before:h-[2px] before:bg-[#007acc]"
+              : "hover:bg-[#f9f9f9] dark:bg-[#18181a] dark:hover:bg-[#2d2d2d] text-[#616161] dark:text-gray-400 hover:text-[#333] dark:hover:text-gray-200"
           )}
           onClick={() => onTabSelect(tab)}
           onKeyDown={(e) => {

@@ -1,0 +1,12 @@
+{
+  "chat": {
+    "modes": {
+      "chat": "对话模式",
+      "builder": "构建模式"
+    },
+    "placeholders": {
+      "chat": "有什么可以帮你的？(Ctrl+V 粘贴图片)",
+      "builder": "描述你想要构建的功能..."
+    }
+  }
+} 

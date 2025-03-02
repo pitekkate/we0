@@ -5,7 +5,6 @@ import { findWeChatDevToolsPath } from "./EditorPreviewTabs";
 import { useFileStore } from "./WeIde/stores/fileStore";
 import { useTranslation } from "react-i18next";
 
-
 interface PreviewIframeProps {
   setShowIframe: (show: boolean) => void;
   isMinPrograme: boolean;
@@ -32,18 +31,19 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
   setShowIframe,
   isMinPrograme,
 }) => {
-  const ipcRenderer = (window as any)?.electron?.ipcRenderer;
+  const ipcRenderer = window.electron?.ipcRenderer;
   const [url, setUrl] = useState<string>("");
   const [port, setPort] = useState<string>("");
+  const { projectRoot } = useFileStore();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [scale, setScale] = useState<number>(1);
-  const [isDragging, setIsDragging] = useState(false);
-  const { projectRoot } = useFileStore();
-  const containerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedSize, setSelectedSize] = useState<WindowSize>(WINDOW_SIZES[0]);
   const [isWindowSizeDropdownOpen, setIsWindowSizeDropdownOpen] =
     useState(false);
+
   useEffect(() => {
     (async () => {
       const instance = await getContainerInstance();
@@ -63,7 +63,7 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
     }
   };
 
-  const displayUrl = port
+    const displayUrl = port
     ? `http://localhost:${port}`
     : isMinPrograme
       ? t('preview.wxminiPreview')
@@ -135,8 +135,6 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
   };
 
   const openExternal = () => {
-    // window.open('http://localhost:5174/');
-    // window.open(url, "_blank", "noopener,noreferrer");
     window.electron.ipcRenderer.send(
       "open:external:url",
       "http://localhost:5174/"
@@ -145,7 +143,7 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
 
   return (
     <div className="preview-container w-full h-full relative flex flex-col overflow-hidden">
-      <div className="browser-header bg-[#252526] border-b border-gray-200 px-4 py-1 flex items-center space-x-2">
+      <div className="browser-header bg-white dark:bg-[#1a1a1c] border-b border-gray-200 px-4 py-1 flex items-center space-x-2">
         <div className="flex space-x-1.5">
           <div className="w-3 h-3 rounded-full bg-red-500"></div>
           <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -156,7 +154,7 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
         </div>
         <div className="relative">
           <button
-            className="ml-2 p-1.5 rounded hover:bg-[#2c2c2c] text-gray-400 hover:text-gray-200 flex items-center gap-2"
+            className="ml-2 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 flex items-center gap-2"
             onClick={() =>
               setIsWindowSizeDropdownOpen(!isWindowSizeDropdownOpen)
             }
@@ -190,7 +188,8 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
                         );
                         // window.electron.ipcRenderer.send("open:external:url", `http://localhost:${port}`);
                       }
-                    }}
+                    }
+}
                   >
                     <size.icon size={20} />
                     <div className="flex flex-col">
@@ -208,14 +207,12 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
           )}
         </div>
         <div className="flex-1 ml-4 flex items-center">
-          <div className="px-3 py-1 rounded-md text-sm text-gray-50 border bg-[#2c2c2c] border-black w-full truncate">
+          <div className="px-3 py-1 rounded-md text-sm text-gray-800 dark:text-gray-50 border bg-gray-50 dark:bg-[#2c2c2c] border-gray-200 dark:border-black w-full truncate">
             {displayUrl}
           </div>
-
           <button
             onClick={handleRefresh}
-            className="ml-2 p-1 rounded hover:bg-[#2c2c2c] text-gray-400 hover:text-gray-200"
-            title="刷新"
+            className="ml-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -233,7 +230,7 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
           <div className="ml-2 flex items-center space-x-1">
             <button
               onClick={handleZoomOut}
-              className="p-1 rounded hover:bg-[#2c2c2c] text-gray-400 hover:text-gray-200"
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               title="缩小"
             >
               <svg
@@ -251,14 +248,13 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
             </button>
             <button
               onClick={handleZoomReset}
-              className="px-2 py-0.5 rounded hover:bg-[#2c2c2c] text-gray-400 hover:text-gray-200 text-xs"
-              title="重置缩放"
+              className="px-2 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-xs"
             >
               {Math.round(scale * 100)}%
             </button>
             <button
               onClick={handleZoomIn}
-              className="p-1 rounded hover:bg-[#2c2c2c] text-gray-400 hover:text-gray-200"
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-[#2c2c2c] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               title="放大"
             >
               <svg
@@ -288,8 +284,8 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
         <div
           className="bg-white transition-all duration-200 origin-center"
           style={{
-            width: String(selectedSize?.width)?.indexOf('%') >= -1 ?  selectedSize.width  : `${selectedSize.width}px`,
-            height: String(selectedSize?.height)?.indexOf('%') >= -1 ? selectedSize.height : `${selectedSize.height}px`,
+            width: String(selectedSize?.width)?.indexOf('%') > -1 ?  selectedSize.width  : `${selectedSize.width}px`,
+            height: String(selectedSize?.height)?.indexOf('%') > -1 ? selectedSize.height : `${selectedSize.height}px`,
             transform: `scale(${scale})`,
           }}
         >
@@ -306,12 +302,12 @@ const PreviewIframe: React.FC<PreviewIframeProps> = ({
           />
         </div>
         {isMinPrograme && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 mt-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
             <div className="text-gray-400">{t("preview.wxminiPreview")}</div>
           </div>
         )}
         {!url && !isMinPrograme && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 mt-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
             <div className="text-gray-400">{t("preview.noserver")}</div>
           </div>
         )}

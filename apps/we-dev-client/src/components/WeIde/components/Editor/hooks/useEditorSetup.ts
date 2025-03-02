@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef } from "react";
 import { EditorView, keymap } from "@codemirror/view";
 import { EditorState, Extension } from "@codemirror/state";
-import { defaultKeymap, indentWithTab } from "@codemirror/commands";
+import { defaultKeymap, indentWithTab, copyLineDown, copyLineUp } from "@codemirror/commands";
 import { getLanguageExtension } from "../utils/language";
 import { editorKeymap } from "../utils/keymap";
 import { editorTheme } from "../config/theme";
 import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 import {
   createDiffExtension,
-  hasDiffContent,
-  applyDiffHighlights,
 } from "../utils/diff";
 import { useEditorStore } from "@/components/WeIde/stores/editorStore";
 
@@ -47,7 +45,27 @@ export const useEditorSetup = ({
   const extensions = useMemo(() => {
     return [
       createDiffExtension(),
-      keymap.of([...defaultKeymap, indentWithTab]),
+      keymap.of([
+        ...defaultKeymap,
+        indentWithTab,
+        {
+          key: "Mod-c",
+          run: (view) => {
+            const text = view.state.sliceDoc(0, view.state.doc.length);
+            navigator.clipboard.writeText(text);
+            return true;
+          }
+        },
+        {
+          key: "Mod-v",
+          run: (view) => {
+            navigator.clipboard.readText().then(text => {
+              view.dispatch(view.state.replaceSelection(text));
+            });
+            return true;
+          }
+        }
+      ]),
       keymap.of(editorKeymap),
       getLanguageExtension(fileName),
       EditorView.updateListener.of((update) => {
@@ -61,11 +79,23 @@ export const useEditorSetup = ({
       editorTheme,
       autoParams,
     
+      EditorView.contentAttributes.of({
+        contenteditable: "true",
+        spellcheck: "false",
+      }),
+      
+      // 只保留右键菜单支持
+      EditorView.domEventHandlers({
+        contextmenu: (event, view) => {
+          return false; // 使用默认右键菜单
+        }
+      }),
+      
       ...customExtensions,
     ].filter(Boolean);
   }, [fileName, customExtensions]);
 
-  // 初始化编辑器
+  // init
   useEffect(() => {
     if (!editorRef.current) return;
 
@@ -81,17 +111,10 @@ export const useEditorSetup = ({
 
     viewRef.current = view;
 
-    // 初始化后检查是否需要应用 diff 高亮
-    // if (hasDiffContent(fileContent)) {
-    //   requestAnimationFrame(() => {
-    //     applyDiffHighlights(view);
-    //   });
-    // }
-
     return () => view.destroy();
   }, [fileName]);
 
-  // 处理文件内容更新
+  // update
   useEffect(() => {
     const view = viewRef.current;
     if (!view || fileContent === prevContentRef.current) return;

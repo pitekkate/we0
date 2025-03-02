@@ -1,22 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { ActivityBar } from "./components/ActivityBar";
-import { FileExplorer } from "./features/file-explorer";
-import { Search } from "./features/search";
-import { Terminal } from "./components/Terminal";
-import { Editor } from "./components/Editor";
-import { EditorTabs } from "./components/EditorTabs";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useEditorStore } from "./stores/editorStore";
+import { Terminal } from "./components/Terminal"
+import { Editor } from "./components/Editor"
+import { EditorTabs } from "./components/EditorTabs"
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
+import { useEditorStore } from "./stores/editorStore"
+import { FileExplorer } from "./components/IDEContent/FileExplorer"
+import { Search } from "./components/IDEContent/Search"
+import { TeamExample } from "../Role"
 
 export default function WeIde() {
   const [activeTab, setActiveTab] = useState("");
   const [showTerminal, setShowTerminal] = useState(true);
-  const [terminalCount, setTerminalCount] = useState(1);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const { setDirty } = useEditorStore();
   const [activeView, setActiveView] = useState<"files" | "search">("files");
   const [currentLine, setCurrentLine] = useState<number | undefined>();
-  const hisotrRef = useRef<string>('');
 
   useEffect(() => {
     const handleEmit = (
@@ -31,19 +30,6 @@ export default function WeIde() {
     };
   }, [openTabs]);
 
-  // 面板打开时，至少一个终端
-  useEffect(() => {
-    if (showTerminal && terminalCount < 1) {
-      setTerminalCount(1)
-    }
-  }, [showTerminal])
-
-  // 关闭最后一个终端时，关闭面板
-  useEffect(() => {
-    if (terminalCount === 0) {
-      setShowTerminal(false)
-    }
-  }, [terminalCount])
 
   const handleFileSelectAiFile = (path: string, line?: number) => {
     setActiveTab(path);
@@ -52,7 +38,6 @@ export default function WeIde() {
       const newTabs = [...openTabs];
       newTabs[0] = path;
       setOpenTabs(newTabs);
-
     }
     setDirty(path, false);
   };
@@ -85,18 +70,19 @@ export default function WeIde() {
         borderTopRightRadius: "0px",
         borderTopLeftRadius: "0px",
       }}
-      className="h-full w-full bg-white dark:bg-[#1e1e1e] text-[#333] dark:text-gray-300 flex overflow-hidden border border-[#e4e4e4] dark:border-[#333]"
+      className="h-full w-full bg-white dark:bg-[#18181a] text-[#333] dark:text-gray-300 flex overflow-hidden border border-[#e4e4e4] dark:border-[#333]"
     >
-      {/* 活动栏（icon栏） */}
+      {/* Activity Bar (Icon Bar) */}
       <ActivityBar
         activeView={activeView}
         onViewChange={setActiveView}
         onToggleTerminal={() => setShowTerminal(!showTerminal)}
+        showTerminal={showTerminal}
       />
 
-      <PanelGroup direction="horizontal">
 
-        {/* 文件列表 */}
+      <PanelGroup direction="horizontal">
+        {/* File List */}
         <Panel
           defaultSize={25}
           minSize={16}
@@ -110,14 +96,13 @@ export default function WeIde() {
           )}
         </Panel>
 
-        {/* 文件列表拖动 */}
-        <PanelResizeHandle className="w-1 hover:bg-[#e8e8e8] dark:hover:bg-[#404040] transition-colors cursor-col-resize" />
-
-        {/* 最右边的coding和终端 */}
+        {/* File List Drag Handle */}
+        <PanelResizeHandle className="w-[1px] bg-[#e6e6e6] hover:bg-[#e8e8e8] dark:hover:bg-[#404040] transition-colors cursor-col-resize" />
+      
+        {/* Coding Area and Terminal */}
         <Panel className="min-w-0 ml-[-1px]">
           <PanelGroup direction="vertical">
-
-            {/* coding区域 */}
+            {/* Coding Area */}
             <Panel className="flex flex-col min-h-0">
               <EditorTabs
                 openTabs={openTabs}
@@ -126,7 +111,7 @@ export default function WeIde() {
                 onTabClose={handleTabClose}
                 onCloseAll={handleCloseAll}
               />
-              <div className="flex-1 overflow-hidden bg-[#ffffff] dark:bg-[#1e1e1e]">
+              <div className="flex-1 overflow-hidden bg-[#ffffff] dark:bg-[#18181a]">
                 {activeTab && (
                   <Editor fileName={activeTab} initialLine={currentLine} />
                 )}
@@ -134,24 +119,30 @@ export default function WeIde() {
             </Panel>
 
             {/* 终端区域 */}
-            {terminalCount !== 0 && <>
-              {/* 上下拖动区域 */}
-              <PanelResizeHandle
-                style={{ display: showTerminal ? "flex" : "none" }}
-                className="h-1 hover:bg-[#e8e8e8] dark:hover:bg-[#404040] transition-colors cursor-row-resize" />
+       
+              <>
+                {/* 上下拖动区域 */}
+                <PanelResizeHandle
+                  style={{ display: showTerminal ? "flex" : "none" }}
+                  className="h-1 hover:bg-[#e8e8e8] dark:hover:bg-[#404040] transition-colors cursor-row-resize"
+                />
 
-              {/* 创建 承载终端 的容器 */}
-              <Panel
-                defaultSize={30}
-                minSize={10}
-                maxSize={80}
-                style={{ display: showTerminal ? "flex" : "none", flexDirection: "column" }}
-                className="bg-[#f3f3f3] dark:bg-[#1e1e1e] border-t border-[#e4e4e4] dark:border-[#333]"
-              >
-                {/* 终端icon + 终端本体 */}
-                <Terminal terminalCount={terminalCount} setTerminalCount={setTerminalCount} />
-              </Panel>
-            </>}
+                {/* 创建 承载终端 的容器 */}
+                <Panel
+                  defaultSize={30}
+                  minSize={10}
+                  maxSize={80}
+                  style={{
+                    display: showTerminal ? "flex" : "none",
+                    flexDirection: "column",
+                  }}
+                  className="bg-[#f6f6f6] dark:bg-[#1e1e1e] border-t border-[#e4e4e4] dark:border-[#333]"
+                >
+                  {/* 终端icon + 终端本体 */}
+                  <Terminal />
+                </Panel>
+              </>
+          
           </PanelGroup>
         </Panel>
       </PanelGroup>

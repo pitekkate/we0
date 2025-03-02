@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { GeneralSettings } from "./GeneralSettings";
-import { TokensSettings } from "./TokensSettings";
-import { useTranslation } from "react-i18next";
+import React, { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
+import { GeneralSettings } from "./GeneralSettings"
+import { QuotaSettings } from "./QuotaSettings"
+import { useTranslation } from "react-i18next"
 
-export type SettingsTab = "General" | "Tokens";
+export type SettingsTab = "General" | "Quota"
 
 export const TAB_KEYS = {
   GENERAL: "General" as const,
-  TOKENS: "Tokens" as const,
-} as const;
+  Quota: "Quota" as const,
+} as const
 
 interface SettingsProps {
-  isOpen: boolean;
-  onClose: () => void;
-  initialTab?: SettingsTab;
+  isOpen: boolean
+  onClose: () => void
+  initialTab?: SettingsTab
 }
 
 export function Settings({
@@ -22,39 +22,39 @@ export function Settings({
   onClose,
   initialTab = TAB_KEYS.GENERAL,
 }: SettingsProps) {
-  const [mounted, setMounted] = React.useState(false);
-  const [isAnimating, setIsAnimating] = React.useState(false);
-  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
-  const { t } = useTranslation();
+  const [mounted, setMounted] = React.useState(false)
+  const [isAnimating, setIsAnimating] = React.useState(false)
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab)
+  const { t } = useTranslation()
 
   useEffect(() => {
-    console.log("Initial Tab:", initialTab);
-    console.log("Active Tab:", activeTab);
-    setActiveTab(initialTab);
-  }, [initialTab]);
+    console.log("Initial Tab:", initialTab)
+    console.log("Active Tab:", activeTab)
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   useEffect(() => {
-    console.log("Active Tab Changed:", activeTab);
-  }, [activeTab]);
+    console.log("Active Tab Changed:", activeTab)
+  }, [activeTab])
 
   useEffect(() => {
     if (isOpen) {
-      setMounted(true);
+      setMounted(true)
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setIsAnimating(true);
-        });
-      });
+          setIsAnimating(true)
+        })
+      })
     } else {
-      setIsAnimating(false);
+      setIsAnimating(false)
       const timer = setTimeout(() => {
-        setMounted(false);
-      }, 300);
-      return () => clearTimeout(timer);
+        setMounted(false)
+      }, 300)
+      return () => clearTimeout(timer)
     }
-  }, [isOpen]);
+  }, [isOpen])
 
-  if (!mounted) return null;
+  if (!mounted) return null
 
   const tabs = [
     {
@@ -83,8 +83,8 @@ export function Settings({
       ),
     },
     {
-      id: TAB_KEYS.TOKENS,
-      label: t("settings.tokens"),
+      id: TAB_KEYS.Quota,
+      label: t("settings.Quota"),
       icon: (
         <svg
           className="w-5 h-5"
@@ -101,7 +101,7 @@ export function Settings({
         </svg>
       ),
     },
-  ];
+  ]
 
   return createPortal(
     <div
@@ -122,7 +122,7 @@ export function Settings({
 
       <div
         className={`
-          relative flex bg-white dark:bg-[#1E1E1E] w-[800px] h-[600px] rounded-lg shadow-xl
+          relative flex bg-white dark:bg-[#18181a] w-[800px] h-[600px] rounded-lg shadow-xl
           transition-all duration-300 ease-out
           ${
             isAnimating
@@ -158,13 +158,13 @@ export function Settings({
         {/* Content */}
         <div className="flex-1 p-5 overflow-y-auto">
           {activeTab === TAB_KEYS.GENERAL && <GeneralSettings />}
-          {activeTab === TAB_KEYS.TOKENS && <TokensSettings />}
+          {activeTab === TAB_KEYS.Quota && <QuotaSettings />}
         </div>
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="absolute text-gray-400 transition-colors top-3 right-3 hover:text-gray-900 dark:hover:text-white"
           aria-label={t("common.close")}
         >
           <svg
@@ -184,5 +184,5 @@ export function Settings({
       </div>
     </div>,
     document.body
-  );
+  )
 }

@@ -4,24 +4,25 @@ import { useRef, useState } from "react";
 import { ChatMode } from "../ChatInput";
 import useChatModeStore from "@/stores/chatModeSlice";
 import { UrlInputDialog } from "../UrlInputDialog";
+import track from "@/utils/track";
+import { Logo } from "@/components/Logo";
 
 interface TipsProps {
   setInput: (s: string) => void;
-  append: any;
+  append: (message: { role: 'user' | 'assistant'; content: string }) => void;
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSketchUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const Tips = (props: TipsProps) => {
-  const { handleFileSelect, setInput, append } = props || {};
+  const { handleFileSelect, setInput, append } = props;
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sketchInputRef = useRef<HTMLInputElement>(null);
   const { mode, initOpen } = useChatModeStore();
   const [isUrlDialogOpen, setIsUrlDialogOpen] = useState(false);
 
-  const handleUrlSubmit = (url: string) => {
-    // 这里处理提交的 URL
+  const handleUrlSubmit = (url: string): void => {
     append({
       role: "user",
       content: `#${url}`,
@@ -31,27 +32,31 @@ const Tips = (props: TipsProps) => {
   return (
     <div className="flex flex-col items-center gap-4 text-gray-500 dark:text-gray-400">
       {initOpen ? (
-        <div className="w-full max-w-3xl mx-auto flex flex-col gap-8 p-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-7xl font-bold text-white mb-6">
+        <div className="flex flex-col w-full max-w-3xl gap-8 p-8 mx-auto">
+          <div className="space-y-4 text-center justify-between items-center flex flex-col">
+            <Logo />
+            <h1 className="mb-6 font-bold text-white text-7xl">
               {t("chat.tips.title")}
             </h1>
+
             <p className="text-lg text-gray-400">
-              you can generate java python js 
+              you can generate java python js
             </p>
           </div>
 
           <div className="flex flex-col gap-6">
             {mode === ChatMode.Builder && (
               <div className="grid grid-cols-2 gap-4">
-                <button className="w-full p-4 rounded-lg bg-zinc-800/50 border border-zinc-700/50 hover:bg-zinc-800 transition-colors">
+                <button className="w-full p-4 transition-colors border rounded-lg bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800">
                   <div className="flex items-center gap-3 text-gray-300">
                     <Upload className="w-3 h-3" />
-                    <span className="text-sm">{t("chat.tips.uploadSketch")}</span>
+                    <span className="text-sm">
+                      {t("chat.tips.uploadSketch")}
+                    </span>
                   </div>
                 </button>
-                <button 
-                  className="w-full p-4 rounded-lg bg-zinc-800/50 border border-zinc-700/50 hover:bg-zinc-800 transition-colors"
+                <button
+                  className="w-full p-4 transition-colors border rounded-lg bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <div className="flex items-center gap-3 text-gray-300">
@@ -61,12 +66,10 @@ const Tips = (props: TipsProps) => {
                 </button>
               </div>
             )}
-
-         
           </div>
         </div>
       ) : (
-        <div className="w-full flex flex-col gap-2 p-4 rounded-lg border border-gray-200 dark:border-gray-600/30 bg-white/50 dark:bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700/10 transition-colors">
+        <div className="flex flex-col w-full gap-2 p-4 transition-colors border border-gray-200 rounded-lg dark:border-gray-600/30 bg-white/50 dark:bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700/10">
           <div className="flex items-center gap-2">
             <Code2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
             <span className="font-medium text-gray-900 dark:text-gray-300">
@@ -80,14 +83,17 @@ const Tips = (props: TipsProps) => {
             
             <div className="flex  gap-2">
               <div
-                className="mr-4 flex items-center gap-2 text-xs mt-2 cursor-pointer text-gray-600 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
-                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 mt-2 mr-4 text-xs text-gray-600 transition-colors cursor-pointer hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
+                onClick={() => {
+                  fileInputRef.current?.click();
+                  track.event("we0_use_file", {});
+                }}
               >
                 <Upload className="w-4 h-4" />
                 <span className="text-sm">{t("chat.tips.uploadImg")}</span>
               </div>
               <div
-                className="flex items-center gap-2 text-xs mt-2 cursor-pointer text-gray-600 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+                className="flex items-center gap-2 mt-2 text-xs text-gray-600 transition-colors cursor-pointer hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
                 onClick={() => setIsUrlDialogOpen(true)}
               >
                 <Globe className="w-4 h-4" />
@@ -96,20 +102,26 @@ const Tips = (props: TipsProps) => {
             </div>
 
             {mode === ChatMode.Builder && (
-              <div className="flex flex-wrap gap-2 text-xs mt-2">
+              <div className="flex flex-wrap gap-2 mt-2 text-xs">
                 <span
                   onClick={() => {
                     setInput(t("chat.tips.game"));
+                    track.event("we0_use_demo", {
+                      type: "game",
+                    });
                   }}
-                  className="px-2 py-1 rounded bg-blue-50 dark:bg-blue-500/20 text-blue-500 dark:text-blue-400"
+                  className="px-2 py-1 text-blue-500 rounded bg-blue-50 dark:bg-blue-500/20 dark:text-blue-400"
                 >
                   {t("chat.tips.game")}
                 </span>
                 <span
                   onClick={() => {
                     setInput(t("chat.tips.hello"));
+                    track.event("we0_use_demo", {
+                      type: "good_page",
+                    });
                   }}
-                  className="px-2 py-1 rounded bg-blue-50 dark:bg-blue-500/20 text-blue-500 dark:text-blue-400"
+                  className="px-2 py-1 text-blue-500 rounded bg-blue-50 dark:bg-blue-500/20 dark:text-blue-400"
                 >
                   {t("chat.tips.hello")}
                 </span>
