@@ -23,6 +23,7 @@ jobs:
 
     - name: Install dependencies for client
       run: |
+        npm install pnpm -g
         cd apps/we-dev-client
         pnpm install
 
