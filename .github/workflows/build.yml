@@ -30,7 +30,7 @@ jobs:
     - name: Build client
       run: |
         cd apps/we-dev-client
-        pnpm build:win
+        pnpm build
 
     # Optional: Add steps for testing
     # - name: Run tests
